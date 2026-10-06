@@ -60,7 +60,7 @@ export default function Intro({ act }) {
             PRESS <kbd>SPACE</kbd>
           </p>
         </div>
-        <p className="intro-meta">SOUND ON · SPACE NEXT · W A S D / ← ↑ ↓ → RIDE</p>
+        <p className="intro-meta">SOUND ON · PRESS SPACE TO MOVE ON</p>
       </div>
     </section>
   );

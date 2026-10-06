@@ -43,7 +43,7 @@ export const CONFIG = {
   /** LOADING (Windows-style dialog) after the crash, in seconds. */
   loadingSeconds: 1.4,
   /** Playable riding segment between Scene 1 and the crash. */
-  includeRide: true,
+  includeRide: false,
   /** RIDE: seconds before the second rider comes at you (Space works any time). */
   rideEventSeconds: 12,
   /**
