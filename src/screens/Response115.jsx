@@ -16,14 +16,14 @@ export default function Response115({ state }) {
           <span className="card-top r115-top"><Vehicle /></span>
           <div className="r115">
             {lines.map(([c, t], i) => (
-              <span key={t} className={`${c} reveal`} style={{ animationDelay: `${0.3 + i * 0.35}s` }}>{t}</span>
+              <span key={t} className={`${c} reveal`} style={{ animationDelay: `${0.2 + i * 0.25}s` }}>{t}</span>
             ))}
-            <span className="t-cream k reveal" style={{ animationDelay: '1.4s' }}>RESPONSE UNIT</span>
-            <span className="v-red big reveal blink-slow" style={{ animationDelay: '1.65s' }}>DISPATCHED</span>
+            <span className="t-cream k reveal" style={{ animationDelay: '0.95s' }}>RESPONSE UNIT</span>
+            <span className="v-red big reveal blink-slow" style={{ animationDelay: '1.15s' }}>DISPATCHED</span>
           </div>
         </div>
         <div className="card card-map-only">
-          <PixelMap mode="route" travel={(state.auto || 7) - 1} />
+          <PixelMap mode="route" travel={Math.max(1.5, (state.auto || 7) - 0.8)} />
         </div>
       </div>
     </RetroWindow>

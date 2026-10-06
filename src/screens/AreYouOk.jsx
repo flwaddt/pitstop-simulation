@@ -48,7 +48,7 @@ export default function AreYouOk({ act }) {
     let last = total;
     const id = setInterval(() => {
       if (done.current) return clearInterval(id);
-      const rem = Math.max(0, total - Math.floor((performance.now() - start) / 1000));
+      const rem = Math.max(0, total - Math.floor((performance.now() - start) / (CONFIG.countdownStepMs || 1000)));
       if (rem === last) return;
       last = rem;
       if (rem === 0) {

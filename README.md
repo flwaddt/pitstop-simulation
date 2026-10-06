@@ -44,7 +44,8 @@ Fonts (Press Start 2P, VT323) are bundled, so the site works offline once loaded
 
 - **Videos:** `ASSETS.video.*` → files in `public/assets/video/`.
 - **Loading step:** Windows-style dialog drawn in HTML, `CONFIG.loadingSeconds`.
-- **Speed:** `CONFIG.videoSpeed` (1.5 = scenes play 1.5× faster; a state can set its own `speed`).
+- **Speed:** `CONFIG.videoSpeed` (2 = scenes play twice as fast; a state can set its own `speed`).
+- **Countdown:** counts 10 → 0; `countdownStepMs` sets how long each number stays (500 ms → 5 s total).
 - **Timings:** countdown, `autoSeconds` for UI 5–10, `rideEventSeconds` for the ride.
 - **Ride:** `CONFIG.includeRide = false` removes the playable segment.
 - **Sound:** every cue has a built-in retro synth fallback. Put a file in `public/assets/audio/`

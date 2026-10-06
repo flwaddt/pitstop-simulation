@@ -40,26 +40,28 @@ export const ASSETS = {
 
 export const CONFIG = {
   /** Playback speed for every cinematic scene (1 = original). A state can override with `speed`. */
-  videoSpeed: 1.5,
+  videoSpeed: 2,
   /** UI 3 countdown, in seconds. */
   countdownSeconds: 10,
+  /** Milliseconds each countdown number stays on screen (500 → the 10 → 0 count takes 5 s). */
+  countdownStepMs: 500,
   /** LOADING (Windows-style dialog) after the crash, in seconds. */
-  loadingSeconds: 1,
+  loadingSeconds: 0.8,
   /** Playable riding segment between Scene 1 and the crash. */
   includeRide: true,
   /** RIDE: seconds before the second rider comes at you (Space works any time). */
-  rideEventSeconds: 6,
+  rideEventSeconds: 4,
   /**
    * Emergency branch: after NO RESPONSE every screen moves on by itself,
    * like signals arriving. Seconds per screen (SPACE skips ahead).
    */
   autoSeconds: {
-    ui5: 2.5, // NO RESPONSE
-    ui6: 3, // ALERT SENT
-    ui7: 3.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
-    ui8: 3.5, // MONITOR ALERT      (auto-presses CONTACT 115)
-    ui9: 3.5, // CONTACTING 115
-    ui10: 5, // 115 RESPONSE       (vehicle drives to the rider)
+    ui5: 1.5, // NO RESPONSE
+    ui6: 2, // ALERT SENT
+    ui7: 2.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 2.5, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 2.5, // CONTACTING 115
+    ui10: 3.5, // 115 RESPONSE       (vehicle drives to the rider)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,

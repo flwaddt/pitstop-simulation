@@ -29,7 +29,7 @@ export function StatusRows({ dim = false, checked = ROWS.length }) {
  * After the title screen, UI 1 runs a short system check — each row ticks
  * in — then presses START SIMULATION by itself. SPACE / click starts at once.
  */
-const STEP = 380;
+const STEP = 250;
 
 export default function SystemReady({ act }) {
   const [checked, setChecked] = useState(0);
@@ -43,13 +43,13 @@ export default function SystemReady({ act }) {
         setTimeout(() => {
           setChecked(i + 1);
           playCue('click');
-        }, 300 + i * STEP),
+        }, 200 + i * STEP),
       ),
     );
-    const ready = 300 + ROWS.length * STEP;
+    const ready = 200 + ROWS.length * STEP;
     t.push(setTimeout(() => playCue('safe'), ready));
-    t.push(setTimeout(() => setPressed(true), ready + 500));
-    t.push(setTimeout(() => act('START'), ready + 800));
+    t.push(setTimeout(() => setPressed(true), ready + 300));
+    t.push(setTimeout(() => act('START'), ready + 500));
     return () => t.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
