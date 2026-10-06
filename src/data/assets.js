@@ -12,7 +12,7 @@ export const ASSETS = {
     scene2: p('assets/video/scene-02-crash.mp4'),
     scene3: p('assets/video/scene-03-bluetooth-to-phone.mp4'),
     scene4: p('assets/video/scene-04-are-you-ok-phone.mp4'),
-    /** Only used when CONFIG.loadingMode === 'video'. */
+    /** Optional alternative to the HTML loading dialog (not used by default). */
     loading: p('assets/video/loading-dialog.mp4'),
   },
 
@@ -33,24 +33,31 @@ export const ASSETS = {
     confirm: null,
     dial: null,
     safe: null,
+    impact: null,
   },
 };
 
 export const CONFIG = {
   /** UI 3 countdown, in seconds. */
   countdownSeconds: 10,
-  /**
-   * LOADING transition:
-   *  'html'  — crisp Windows-style dialog drawn in HTML, ~1.4 s (matches spec)
-   *  'video' — plays ASSETS.video.loading instead
-   */
-  loadingMode: 'html',
+  /** LOADING (Windows-style dialog) after the crash, in seconds. */
   loadingSeconds: 1.4,
-  /** Auto-advance timings for screens without a button. */
-  noResponseSeconds: 3.2, // UI 5
-  alertSentSeconds: 4.5, // UI 6
-  contacting115Seconds: 5, // UI 9
-  response115Seconds: 7.5, // UI 10
+  /** Playable riding segment between Scene 1 and the crash. */
+  includeRide: true,
+  /** RIDE: seconds before the second rider comes at you (Space works any time). */
+  rideEventSeconds: 12,
+  /**
+   * Emergency branch: after NO RESPONSE every screen moves on by itself,
+   * like signals arriving. Seconds per screen (SPACE skips ahead).
+   */
+  autoSeconds: {
+    ui5: 5, // NO RESPONSE
+    ui6: 5.5, // ALERT SENT
+    ui7: 6, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 6, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 6, // CONTACTING 115
+    ui10: 8, // 115 RESPONSE       (vehicle drives to the rider)
+  },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,
   soundOnByDefault: true,

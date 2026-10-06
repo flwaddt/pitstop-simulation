@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
 import RetroWindow from '../components/RetroWindow.jsx';
 import { Radio } from '../components/Pixel.jsx';
-import { CONFIG } from '../data/assets.js';
 import { playCue } from '../lib/audio.js';
 
 const ITEMS = ['RIDER INFORMATION', 'CRASH STATUS', 'LIVE LOCATION', 'EMERGENCY CONTACT'];
 const BLOCKS = 14;
 
 /** UI 9 — Monitor → 115. PITSTOP does not call 115. */
-export default function Contacting115() {
+export default function Contacting115({ state }) {
   const [step, setStep] = useState(0);
   useEffect(() => {
-    const span = (CONFIG.contacting115Seconds - 0.8) * 1000;
+    const span = ((state.auto || 5) - 0.8) * 1000;
     const id = setInterval(() => setStep((s) => Math.min(s + 1, BLOCKS)), span / BLOCKS);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const shown = Math.floor((step / BLOCKS) * (ITEMS.length + 1));
   useEffect(() => {

@@ -10,11 +10,15 @@ import { playCue, playTick } from '../lib/audio.js';
  * UI 3 — full-screen takeover after Scene 4.
  * Real countdown 10 → 0. I'M OK stops it at once.
  * NO RESPONSE (or reaching 0): ~0.2 s silence → low hit → BEEP—BEEP → UI 5.
+ * Keyboard: ← / A choose I'M OK, → / D choose NO RESPONSE, SPACE / ENTER confirm.
  */
 export default function AreYouOk({ act }) {
   const total = CONFIG.countdownSeconds;
   const [left, setLeft] = useState(total);
   const [zero, setZero] = useState(false);
+  const [sel, setSel] = useState('ok');
+  const selRef = useRef('ok');
+  selRef.current = sel;
   const done = useRef(false);
   const timers = useRef([]);
 
@@ -58,6 +62,29 @@ export default function AreYouOk({ act }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const h = (e) => {
+      if (done.current) return;
+      const k = e.key.toLowerCase();
+      if (k === 'arrowleft' || k === 'a' || k === 'arrowup' || k === 'w') {
+        e.preventDefault();
+        if (selRef.current !== 'ok') playCue('click');
+        setSel('ok');
+      } else if (k === 'arrowright' || k === 'd' || k === 'arrowdown' || k === 's') {
+        e.preventDefault();
+        if (selRef.current !== 'no') playCue('click');
+        setSel('no');
+      } else if ((e.code === 'Space' || k === ' ' || k === 'enter') && !e.repeat) {
+        e.preventDefault();
+        if (selRef.current === 'ok') ok();
+        else goZero();
+      }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <RetroWindow
       className={zero ? 'win-zero' : ''}
@@ -70,13 +97,17 @@ export default function AreYouOk({ act }) {
           <p className="modal-sub">PLEASE CONFIRM YOUR STATUS</p>
           <CountdownRing value={left} total={total} zero={zero} />
           <div className="modal-btns">
-            <RetroButton tone="green" onClick={ok} disabled={zero} autoFocus>
+            <RetroButton tone="green" className={sel === 'ok' ? 'is-sel' : ''} onMouseEnter={() => setSel('ok')} onClick={ok} disabled={zero}>
               I’M OK ✓
             </RetroButton>
-            <RetroButton tone="red" onClick={goZero} disabled={zero}>
+            <RetroButton tone="red" className={sel === 'no' ? 'is-sel' : ''} onMouseEnter={() => setSel('no')} onClick={goZero} disabled={zero}>
               NO RESPONSE
             </RetroButton>
           </div>
+          <p className="modal-keys" aria-hidden="true">
+            <kbd>◀</kbd>
+            <kbd>▶</kbd> CHOOSE · <kbd>SPACE</kbd> CONFIRM
+          </p>
         </div>
       }
     >

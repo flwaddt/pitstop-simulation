@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { Folder, Spinner, Warning } from './Pixel.jsx';
+import { AutoCtx } from '../lib/autoCtx.js';
 
 /**
  * The master UI frame from UI 1: chunky grey Windows-like window, PITSTOP
@@ -12,8 +14,9 @@ import { Folder, Spinner, Warning } from './Pixel.jsx';
  * deco:     { spinnerLeft, spinnerRight, cursor }
  */
 export default function RetroWindow({ band, controls = true, footer, overlay, deco = {}, children, className = '' }) {
+  const auto = useContext(AutoCtx);
   return (
-    <div className={`win ${className}`}>
+    <div className={`win ${className} ${auto ? 'win-auto' : ''}`} style={auto ? { '--auto': `${auto}s` } : undefined}>
       <span className="screw s-tl" />
       <span className="screw s-tr" />
       <span className="screw s-bl" />
@@ -37,6 +40,12 @@ export default function RetroWindow({ band, controls = true, footer, overlay, de
           </div>
         )}
         <div className="ws-body">{children}</div>
+        {auto > 0 && (
+          <div className="sigbar" aria-hidden="true">
+            <span>RECEIVING SIGNAL</span>
+            <i />
+          </div>
+        )}
       </div>
 
       <div className="deco deco-folder-1"><Folder /></div>

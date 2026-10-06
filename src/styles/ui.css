@@ -9,7 +9,7 @@
   place-items: center;
   padding: 48px 10px 40px;
 }
-.stage-overlay {
+.stage-bare {
   padding: 0;
 }
 .win-wrap {
@@ -1234,4 +1234,183 @@
 }
 .r115 .t-cream {
   font-size: 2.7cqw;
+}
+
+/* ═══ Auto-advance: incoming-signal bar + auto-pressed button ═════════ */
+.sigbar {
+  position: absolute;
+  left: 0.6cqw;
+  right: 0.6cqw;
+  bottom: 0.5cqw;
+  height: 1.6cqw;
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  z-index: 2;
+  pointer-events: none;
+}
+.sigbar span {
+  font-size: 1.7cqw;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  white-space: nowrap;
+  animation: blink 0.8s steps(2) infinite;
+}
+.sigbar i {
+  flex: 1;
+  height: 0.8cqw;
+  background: repeating-linear-gradient(90deg, var(--cyan) 0 1.2cqw, transparent 1.2cqw 1.6cqw);
+  transform-origin: left;
+  animation: sigFill var(--auto) linear both;
+}
+@keyframes sigFill {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* footer buttons on timed screens press themselves just before moving on */
+.win-auto .win-foot .rbtn {
+  animation: autoPress 0.25s calc(var(--auto) - 0.4s) steps(1) both;
+}
+.win-auto .win-foot .rbtn-ol-red {
+  animation: olPulse 1s steps(2) infinite, autoPress 0.25s calc(var(--auto) - 0.4s) steps(1) both;
+}
+@keyframes autoPress {
+  0%,
+  100% {
+    background: #a9adb1;
+    box-shadow: inset -0.35cqw -0.35cqw 0 #f6f7f8, inset 0.35cqw 0.35cqw 0 #6a6e72;
+    transform: translateY(0.2cqw);
+  }
+}
+
+/* ═══ UI 3 keyboard selection ═══════════════════════════════════════ */
+.modal .rbtn.is-sel:not(:disabled) {
+  background: #fff7d6;
+  outline: 0.4cqw solid var(--yellow);
+  outline-offset: 0.2cqw;
+}
+.modal .rbtn.is-sel:not(:disabled) .rbtn-br {
+  animation: blink 0.6s steps(2) infinite;
+}
+.modal-keys {
+  margin: 0;
+  font-size: 1.9cqw;
+  letter-spacing: 0.06em;
+  color: #3b4146;
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+}
+.modal-keys kbd {
+  font-size: 1.7cqw;
+  border-width: 0.18cqw;
+  box-shadow: inset 0.18cqw 0.18cqw 0 var(--frame-hi), inset -0.18cqw -0.25cqw 0 var(--frame-lo);
+  padding: 0 0.4cqw;
+}
+.modal {
+  bottom: 1.6cqw;
+  gap: 0.35cqw;
+}
+.modal-btns {
+  margin-top: 0.4cqw;
+}
+
+/* ═══ RIDE ══════════════════════════════════════════════════════════ */
+.ride {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+.ride-frame {
+  position: relative;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  container-type: inline-size;
+}
+.ride-cv {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.ride-hud {
+  position: absolute;
+  top: 5.2cqw;
+  padding: 0.3cqw 1cqw;
+  background: rgb(10 14 12 / 0.75);
+  border: 0.25cqw solid var(--ink);
+  box-shadow: inset 0 0 0 0.2cqw #3b433f;
+  font-family: var(--font-term);
+  font-size: 2.2cqw;
+  letter-spacing: 0.06em;
+  color: var(--cream);
+}
+.ride-hud .k {
+  color: #8d968f;
+}
+.ride-tl {
+  left: 1.4cqw;
+}
+.ride-tr {
+  right: 1.4cqw;
+  display: flex;
+  align-items: center;
+  gap: 0.6cqw;
+  color: var(--green-t);
+}
+.ride-dot {
+  width: 0.9cqw;
+  height: 0.9cqw;
+  background: var(--red-t);
+  animation: blink 0.66s steps(2) infinite;
+}
+.ride-warn {
+  position: absolute;
+  left: 50%;
+  top: 11cqw;
+  transform: translateX(-50%);
+  padding: 0.3cqw 1.6cqw;
+  background: var(--yellow);
+  border: 0.3cqw solid var(--ink);
+  font-family: var(--font-term);
+  font-size: 2.8cqw;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  animation: blink 0.5s steps(2) infinite;
+}
+.ride-keys {
+  position: absolute;
+  left: 50%;
+  bottom: 1.4cqw;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  padding: 0.5cqw 1.4cqw;
+  background: rgb(10 14 12 / 0.8);
+  border: 0.25cqw solid var(--ink);
+  font-family: var(--font-term);
+  font-size: 2cqw;
+  letter-spacing: 0.06em;
+  color: var(--cream);
+  white-space: nowrap;
+}
+.ride-keys .kgrp {
+  display: flex;
+  gap: 0.3cqw;
+}
+.ride-keys kbd {
+  font-size: 1.8cqw;
+  border-width: 0.2cqw;
+  box-shadow: inset 0.2cqw 0.2cqw 0 var(--frame-hi), inset -0.2cqw -0.3cqw 0 var(--frame-lo);
+}
+.ride-keys .sep {
+  color: #6c766f;
 }

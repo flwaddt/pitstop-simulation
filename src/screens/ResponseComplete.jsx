@@ -7,7 +7,7 @@ export default function ResponseComplete({ act }) {
     <RetroWindow
       band={{ tone: 'green', text: 'RESPONSE COMPLETE' }}
       deco={{ spinnerRight: true }}
-      footer={<RetroButton onClick={() => act('REPLAY')} autoFocus>REPLAY</RetroButton>}
+      footer={<RetroButton onClick={() => act('REPLAY')}>REPLAY</RetroButton>}
     >
       <div className="col">
         <span className="tile tile-glow pop"><Check /></span>

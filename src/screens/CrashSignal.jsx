@@ -6,7 +6,7 @@ export default function CrashSignal({ act }) {
   return (
     <RetroWindow
       band={{ tone: 'red', text: 'CRASH SIGNAL RECEIVED' }}
-      footer={<RetroButton onClick={() => act('CONTINUE')} autoFocus>CONTINUE</RetroButton>}
+      footer={<RetroButton onClick={() => act('CONTINUE')}>CONTINUE</RetroButton>}
     >
       <ul className="rows rows-signal">
         <li className="row row-2">

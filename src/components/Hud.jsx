@@ -2,10 +2,10 @@ import { PILLARS } from '../data/states.js';
 
 /**
  * Thin overlay outside the window: DETECT · VERIFY · RESPOND tracker,
- * sound / fullscreen / restart, a one-line caption naming who in the system
- * is acting, and SKIP for videos and timed screens.
+ * sound / fullscreen / restart, and the SPACE key hint (clickable too).
+ * No captions: the player discovers the system by playing.
  */
-export default function Hud({ state, stateId, muted, onToggleMute, onRestart, onSkip, onFullscreen, isFullscreen, canSkip }) {
+export default function Hud({ state, muted, onToggleMute, onRestart, onSpace, onFullscreen, isFullscreen, spaceHint }) {
   const activeIdx = state.pillar ? PILLARS.indexOf(state.pillar) : -1;
   return (
     <div className={`hud ${state.type === 'video' ? 'hud-video' : 'hud-ui'}`}>
@@ -48,17 +48,10 @@ export default function Hud({ state, stateId, muted, onToggleMute, onRestart, on
         </div>
       </div>
 
-      {state.actor && (
-        <p className="cap" key={stateId}>
-          {state.label && <span className="cap-label">{state.label}</span>}
-          <span className="cap-actor">{state.actor}</span>
-          {state.note && <span className="cap-note">{state.note}</span>}
-        </p>
-      )}
-
-      {canSkip && (
-        <button type="button" className="skip" onClick={onSkip}>
-          {state.type === 'video' ? 'SKIP SCENE' : 'NEXT'} ▸
+      {spaceHint && (
+        <button type="button" className="keyhint" onClick={onSpace}>
+          <kbd>SPACE</kbd>
+          <span>{spaceHint}</span>
         </button>
       )}
     </div>

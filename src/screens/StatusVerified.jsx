@@ -7,7 +7,7 @@ export default function StatusVerified({ act }) {
     <RetroWindow
       band={{ tone: 'green', text: 'STATUS VERIFIED' }}
       deco={{ cursor: <Cursor color="#25b3c8" /> }}
-      footer={<RetroButton onClick={() => act('CONTINUE')} autoFocus>CONTINUE</RetroButton>}
+      footer={<RetroButton onClick={() => act('CONTINUE')}>CONTINUE</RetroButton>}
     >
       <div className="col">
         <span className="tile pop"><Check /></span>

@@ -1,5 +1,6 @@
 import SystemReady from './SystemReady.jsx';
 import Loading from './Loading.jsx';
+import Ride from './Ride.jsx';
 import CrashSignal from './CrashSignal.jsx';
 import AreYouOk from './AreYouOk.jsx';
 import StatusVerified from './StatusVerified.jsx';
@@ -15,6 +16,7 @@ import ResponseComplete from './ResponseComplete.jsx';
 export const SCREENS = {
   SystemReady,
   Loading,
+  Ride,
   CrashSignal,
   AreYouOk,
   StatusVerified,

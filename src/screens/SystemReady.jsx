@@ -28,7 +28,7 @@ export default function SystemReady({ act }) {
       band={{ tone: 'green', text: 'SYSTEM READY' }}
       deco={{ spinnerLeft: true, spinnerRight: true, cursor: <Cursor /> }}
       footer={
-        <RetroButton onClick={() => act('START')} autoFocus>
+        <RetroButton onClick={() => act('START')}>
           START SIMULATION
         </RetroButton>
       }

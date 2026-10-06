@@ -3,12 +3,12 @@ import PixelMap from '../components/PixelMap.jsx';
 import { Person, Pin } from '../components/Pixel.jsx';
 
 /** UI 7 — Emergency Contact receives the alert + live location. No 115 here. */
-export default function EmergencyContact({ act }) {
+export default function EmergencyContact({ act, state }) {
   return (
     <RetroWindow
       band={{ tone: 'hazard', text: 'EMERGENCY CONTACT' }}
       deco={{ spinnerRight: true }}
-      footer={<RetroButton onClick={() => act('VIEW_LOCATION')} autoFocus>VIEW LOCATION</RetroButton>}
+      footer={<RetroButton className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('VIEW_LOCATION')}>VIEW LOCATION</RetroButton>}
     >
       <div className="cards">
         <div className="card info">

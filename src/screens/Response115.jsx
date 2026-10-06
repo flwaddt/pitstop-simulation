@@ -1,10 +1,9 @@
 import RetroWindow from '../components/RetroWindow.jsx';
 import PixelMap from '../components/PixelMap.jsx';
 import { Vehicle } from '../components/Pixel.jsx';
-import { CONFIG } from '../data/assets.js';
 
 /** UI 10 — 115 responds and dispatches a response unit. */
-export default function Response115() {
+export default function Response115({ state }) {
   const lines = [
     ['t-green', 'INCIDENT RECEIVED ✓'],
     ['t-green', 'LOCATION CONFIRMED ✓'],
@@ -24,7 +23,7 @@ export default function Response115() {
           </div>
         </div>
         <div className="card card-map-only">
-          <PixelMap mode="route" travel={CONFIG.response115Seconds - 1} />
+          <PixelMap mode="route" travel={(state.auto || 7) - 1} />
         </div>
       </div>
     </RetroWindow>

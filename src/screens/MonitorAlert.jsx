@@ -2,13 +2,13 @@ import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
 import PixelMap from '../components/PixelMap.jsx';
 
 /** UI 8 — the Monitor sees everything and is the party that calls 115. */
-export default function MonitorAlert({ act }) {
+export default function MonitorAlert({ act, state }) {
   return (
     <RetroWindow
       band={{ tone: 'red', text: 'MONITOR ALERT' }}
       deco={{ spinnerRight: true }}
       footer={
-        <RetroButton outline="red" onClick={() => act('CONTACT_115')} autoFocus>
+        <RetroButton outline="red" className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('CONTACT_115')}>
           CONTACT 115
         </RetroButton>
       }
