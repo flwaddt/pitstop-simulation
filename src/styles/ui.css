@@ -1622,3 +1622,17 @@
   color: #8d968f;
   animation: reveal 0.4s 1.9s steps(4) both;
 }
+.intro-credit {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  font-size: clamp(13px, 1.4vw, 18px);
+  letter-spacing: 0.12em;
+  color: #9aa39d;
+  text-shadow: 2px 2px 0 #000;
+  animation: reveal 0.4s 2.1s steps(4) both;
+}

@@ -61,6 +61,9 @@ export default function Intro({ act }) {
           </p>
         </div>
         <p className="intro-meta">SOUND ON · SPACE NEXT · W A S D / ← ↑ ↓ → RIDE</p>
+        <p className="intro-credit">
+          CINEMATIC SCENES GENERATED WITH GOOGLE VEO · ALL IDEAS &amp; PROMPTS BY TEAM PITSTOP
+        </p>
       </div>
     </section>
   );
