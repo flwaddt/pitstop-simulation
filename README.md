@@ -8,7 +8,7 @@ Live: https://flwaddt.github.io/pitstop-simulation/
 ## Flow
 
 ```
-INTRO title screen [START SIMULATION] → UI 1 system check (starts by itself) → SCENE 1 normal riding → SCENE 2 crash → LOADING (Win98 dialog)
+INTRO title screen [START SIMULATION] → UI 1 system check (starts by itself) → SCENE 1 normal riding → RIDE (playable) → SCENE 2 crash → LOADING (Win98 dialog)
 → SCENE 3 PITSTOP → Bluetooth → Phone → SCENE 4 phone shows "ARE YOU OK?" ─CUT→ UI 3
 UI 3 (real 10 → 0 countdown)
  ├─ I'M OK ──────────────→ UI 4 STATUS VERIFIED → back to SCENE 1
@@ -40,7 +40,7 @@ Fonts (Press Start 2P, VT323) are bundled, so the site works offline once loaded
 - **Videos:** `ASSETS.video.*` → files in `public/assets/video/`.
 - **Loading step:** Windows-style dialog drawn in HTML, `CONFIG.loadingSeconds`.
 - **Timings:** countdown, `autoSeconds` for UI 5–10, `rideEventSeconds` for the ride.
-- **Ride:** the playable riding segment is off. `CONFIG.includeRide = true` puts it back between Scene 1 and the crash.
+- **Ride:** `CONFIG.includeRide = false` removes the playable segment.
 - **Sound:** every cue has a built-in retro synth fallback. Put a file in `public/assets/audio/`
   and set its path in `ASSETS.audio` to replace one. `ASSETS.audio.music` loops under the UI
   screens only — use music you have the rights to publish.
@@ -57,7 +57,7 @@ it was blurred out of the road surface. The clean clip is the one in `public/ass
 | Key | What it does |
 |---|---|
 | **SPACE** | Next: start, skip a video, continue, replay |
-| **W A S D / arrow keys** | Ride the scooter (only if `includeRide` is on) |
+| **W A S D / arrow keys** | Ride the scooter (RIDE) |
 | **← / A, → / D** then **SPACE** | Choose I'M OK or NO RESPONSE (UI 3) |
 
 Mouse works too. Top right: sound, fullscreen, restart. There are no on-screen captions, so the
