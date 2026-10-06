@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { RetroButton } from '../components/RetroWindow.jsx';
 import { ASSETS } from '../data/assets.js';
 import { isTouch } from '../lib/device.js';
+import VersionLink from '../components/VersionLink.jsx';
 
 /**
  * INTRO — title screen before UI 1.
@@ -39,6 +40,7 @@ export default function Intro({ act }) {
 
   return (
     <section className="intro">
+      <VersionLink />
       <video ref={video} className="intro-src" src={ASSETS.video.scene1} muted loop playsInline preload="auto" aria-hidden="true" />
       <canvas ref={canvas} className="intro-bg" width={PW} height={PH} aria-hidden="true" />
       <div className="intro-shade" aria-hidden="true" />

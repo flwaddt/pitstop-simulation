@@ -3,7 +3,12 @@
 Interactive, branching simulation of the PITSTOP helmet-mounted crash detector.
 **Detect → Verify → Respond.** Follows `reference/PITSTOP_MASTER_INTERACTIVE_FLOW_A-Z.docx`.
 
-Live: https://flwaddt.github.io/pitstop-simulation/
+Live:
+- Computer (keyboard): https://flwaddt.github.io/pitstop-simulation/
+- Phone (touch): https://flwaddt.github.io/pitstop-simulation/mobile/
+
+Both are built from the same code (`npm run build` makes `dist/` and `dist/mobile/`).
+Opening one on the wrong device shows a link to the other.
 
 ## Flow
 
@@ -39,6 +44,7 @@ Fonts (Press Start 2P, VT323) are bundled, so the site works offline once loaded
 
 - **Videos:** `ASSETS.video.*` → files in `public/assets/video/`.
 - **Loading step:** Windows-style dialog drawn in HTML, `CONFIG.loadingSeconds`.
+- **Speed:** `CONFIG.videoSpeed` (1.5 = scenes play 1.5× faster; a state can set its own `speed`).
 - **Timings:** countdown, `autoSeconds` for UI 5–10, `rideEventSeconds` for the ride.
 - **Ride:** `CONFIG.includeRide = false` removes the playable segment.
 - **Sound:** every cue has a built-in retro synth fallback. Put a file in `public/assets/audio/`
@@ -54,7 +60,7 @@ it was blurred out of the road surface. The clean clip is the one in `public/ass
 
 ## Phones
 
-The same link works on phones and tablets: tap **NEXT ▸** (bottom right) instead of Space,
+The `/mobile/` version is made for phones and tablets: tap **NEXT ▸** (bottom right) instead of Space,
 tap the answer buttons on ARE YOU OK?, and use the on-screen ◀ ▲ ▼ ▶ pad in the ride.
 START goes fullscreen and locks landscape where the browser allows (Android). In portrait a
 "rotate your phone" prompt appears; *PLAY UPRIGHT* dismisses it. The START tap also unlocks

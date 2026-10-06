@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
+import { CONFIG } from '../data/assets.js';
 
 /**
  * Two stacked <video> layers.
@@ -43,6 +44,10 @@ function CinematicPlayer({ stateId, state, mode, preloadSrc, muted, onEnded, onM
       el.currentTime = 0;
     } catch {}
     el.muted = muted;
+    // Faster scenes: load() resets playbackRate to defaultPlaybackRate, so set both.
+    const rate = state.speed ?? CONFIG.videoSpeed ?? 1;
+    el.defaultPlaybackRate = rate;
+    el.playbackRate = rate;
     // Retrigger the entry animation for this layer.
     el.dataset.fx = state.transition || 'fade';
     el.style.animation = 'none';

@@ -3,7 +3,8 @@
  * Every media file is referenced from here; swapping one is a one-line change.
  * Paths are relative to /public.
  */
-const base = import.meta.env.BASE_URL;
+// The phone build lives in /mobile/ and reads the shared videos from ../assets.
+const base = import.meta.env.VITE_ASSET_BASE || import.meta.env.BASE_URL;
 const p = (path) => (path ? `${base}${path}` : null);
 
 export const ASSETS = {
@@ -38,25 +39,27 @@ export const ASSETS = {
 };
 
 export const CONFIG = {
+  /** Playback speed for every cinematic scene (1 = original). A state can override with `speed`. */
+  videoSpeed: 1.5,
   /** UI 3 countdown, in seconds. */
   countdownSeconds: 10,
   /** LOADING (Windows-style dialog) after the crash, in seconds. */
-  loadingSeconds: 1.4,
+  loadingSeconds: 1,
   /** Playable riding segment between Scene 1 and the crash. */
   includeRide: true,
   /** RIDE: seconds before the second rider comes at you (Space works any time). */
-  rideEventSeconds: 12,
+  rideEventSeconds: 6,
   /**
    * Emergency branch: after NO RESPONSE every screen moves on by itself,
    * like signals arriving. Seconds per screen (SPACE skips ahead).
    */
   autoSeconds: {
-    ui5: 5, // NO RESPONSE
-    ui6: 5.5, // ALERT SENT
-    ui7: 6, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
-    ui8: 6, // MONITOR ALERT      (auto-presses CONTACT 115)
-    ui9: 6, // CONTACTING 115
-    ui10: 8, // 115 RESPONSE       (vehicle drives to the rider)
+    ui5: 2.5, // NO RESPONSE
+    ui6: 3, // ALERT SENT
+    ui7: 3.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 3.5, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 3.5, // CONTACTING 115
+    ui10: 5, // 115 RESPONSE       (vehicle drives to the rider)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,

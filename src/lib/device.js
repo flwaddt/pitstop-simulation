@@ -1,7 +1,13 @@
-/** Touch-first device (phone / tablet): show on-screen controls, "TAP" hints. */
-export const isTouch =
+/** Which build this is: 'desktop' (keyboard), 'mobile' (touch) or undefined (auto-detect). */
+export const DEVICE_BUILD = import.meta.env.VITE_DEVICE;
+
+/** Does this device look like a phone / tablet? */
+export const looksTouch =
   typeof window !== 'undefined' &&
   (window.matchMedia?.('(pointer: coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+/** Show on-screen controls and "TAP" hints. Fixed by the build, else detected. */
+export const isTouch = DEVICE_BUILD === 'mobile' ? true : DEVICE_BUILD === 'desktop' ? false : looksTouch;
 
 /** Send a synthetic key press so touch buttons reuse the keyboard handlers. */
 export function sendKey(key, type = 'keydown') {

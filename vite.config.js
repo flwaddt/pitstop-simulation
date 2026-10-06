@@ -2,14 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// `npm run build`        → dist/ (index.html + JS/CSS + assets) for any static host
-// `npm run build:single` → dist-single/ with JS and CSS inlined into index.html
-//                          (videos stay as separate files next to it)
+// `npm run build`        → dist/          computer version (keyboard)
+//                          dist/mobile/   phone version (touch), shares dist/assets/video
+// `npm run build:single` → dist-single/   one index.html (auto-detects device) + assets/
 export default defineConfig(({ mode }) => ({
   base: './',
   plugins: [react(), ...(mode === 'single' ? [viteSingleFile()] : [])],
+  publicDir: mode === 'mobile' ? false : 'public', // phone build reuses the videos in dist/
   build: {
-    outDir: mode === 'single' ? 'dist-single' : 'dist',
+    outDir: mode === 'single' ? 'dist-single' : mode === 'mobile' ? 'dist/mobile' : 'dist',
+    emptyOutDir: mode !== 'mobile',
     // single mode inlines the fonts too, so the page is one HTML file + videos
     assetsInlineLimit: mode === 'single' ? 1024 * 1024 : 0,
   },
