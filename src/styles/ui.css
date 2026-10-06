@@ -1414,3 +1414,12 @@
 .ride-keys .sep {
   color: #6c766f;
 }
+.modal-keys.nudge {
+  animation: nudge 0.15s steps(2) 4;
+}
+@keyframes nudge {
+  50% {
+    color: #e3191b;
+    transform: translateX(0.4cqw);
+  }
+}

@@ -16,8 +16,11 @@ export default function AreYouOk({ act }) {
   const total = CONFIG.countdownSeconds;
   const [left, setLeft] = useState(total);
   const [zero, setZero] = useState(false);
-  const [sel, setSel] = useState('ok');
-  const selRef = useRef('ok');
+  // Nothing is selected at first, so a Space pressed to skip the video
+  // before this screen can't answer for the rider by accident.
+  const [sel, setSel] = useState(null);
+  const [nudge, setNudge] = useState(0);
+  const selRef = useRef(null);
   selRef.current = sel;
   const done = useRef(false);
   const timers = useRef([]);
@@ -77,7 +80,8 @@ export default function AreYouOk({ act }) {
       } else if ((e.code === 'Space' || k === ' ' || k === 'enter') && !e.repeat) {
         e.preventDefault();
         if (selRef.current === 'ok') ok();
-        else goZero();
+        else if (selRef.current === 'no') goZero();
+        else setNudge((n) => n + 1); // no choice yet: flash the key hint
       }
     };
     window.addEventListener('keydown', h);
@@ -104,7 +108,7 @@ export default function AreYouOk({ act }) {
               NO RESPONSE
             </RetroButton>
           </div>
-          <p className="modal-keys" aria-hidden="true">
+          <p className={`modal-keys ${nudge ? 'nudge' : ''}`} key={nudge} aria-hidden="true">
             <kbd>◀</kbd>
             <kbd>▶</kbd> CHOOSE · <kbd>SPACE</kbd> CONFIRM
           </p>
