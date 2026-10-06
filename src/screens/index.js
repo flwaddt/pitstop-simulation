@@ -1,3 +1,4 @@
+import Intro from './Intro.jsx';
 import SystemReady from './SystemReady.jsx';
 import Loading from './Loading.jsx';
 import Ride from './Ride.jsx';
@@ -14,6 +15,7 @@ import ResponseComplete from './ResponseComplete.jsx';
 
 /** Screen registry — states.js refers to screens by these names. */
 export const SCREENS = {
+  Intro,
   SystemReady,
   Loading,
   Ride,

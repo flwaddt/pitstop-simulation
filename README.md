@@ -8,7 +8,7 @@ Live: https://flwaddt.github.io/pitstop-simulation/
 ## Flow
 
 ```
-UI 1 SYSTEM READY → SCENE 1 normal riding → RIDE (playable) → SCENE 2 crash → LOADING (Win98 dialog)
+INTRO title screen [START SIMULATION] → UI 1 system check (starts by itself) → SCENE 1 normal riding → RIDE (playable) → SCENE 2 crash → LOADING (Win98 dialog)
 → SCENE 3 PITSTOP → Bluetooth → Phone → SCENE 4 phone shows "ARE YOU OK?" ─CUT→ UI 3
 UI 3 (real 10 → 0 countdown)
  ├─ I'M OK ──────────────→ UI 4 STATUS VERIFIED → back to SCENE 1

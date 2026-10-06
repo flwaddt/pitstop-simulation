@@ -30,7 +30,7 @@ export default function App() {
 
   // Optional music only under UI screens (never under the videos).
   useEffect(() => {
-    setMusic(state.type === 'ui' && stateId !== 'UI_1');
+    setMusic(state.type === 'ui' && stateId !== 'UI_1' && stateId !== 'INTRO');
   }, [state.type, stateId]);
 
   const screenAct = useCallback(
@@ -54,7 +54,7 @@ export default function App() {
     if (state.primary) screenAct(state.primary);
     else if (canSkip) skip();
   }, [state, canSkip, skip, screenAct]);
-  const spaceHint = state.keys === 'self' ? null : state.primary ? state.hint || state.primary : canSkip ? (state.type === 'video' ? 'SKIP' : 'NEXT') : null;
+  const spaceHint = state.keys === 'self' || state.hideHint ? null : state.primary ? state.hint || state.primary : canSkip ? (state.type === 'video' ? 'SKIP' : 'NEXT') : null;
 
   useEffect(() => {
     const h = (e) => {
@@ -107,7 +107,7 @@ export default function App() {
 
       {missing && missing.id === stateId && <AssetPlaceholder stateId={stateId} src={missing.src} onContinue={skip} />}
 
-      <Hud
+      {!state.hideHud && <Hud
         state={state}
         stateId={stateId}
         muted={muted}
@@ -120,7 +120,7 @@ export default function App() {
         onSpace={advance}
         onFullscreen={toggleFs}
         isFullscreen={isFs}
-      />
+      />}
     </main>
   );
 }

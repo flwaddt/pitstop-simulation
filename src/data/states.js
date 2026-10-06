@@ -4,7 +4,7 @@ import { ASSETS, CONFIG } from './assets.js';
  * PITSTOP state machine — follows PITSTOP_MASTER_INTERACTIVE_FLOW_A-Z,
  * plus a playable RIDE between Scene 1 and the crash.
  *
- *  UI_1 → SCENE_1 → RIDE (W A S D / arrows) → SCENE_2 → LOADING
+ *  INTRO → UI_1 → SCENE_1 → RIDE (W A S D / arrows) → SCENE_2 → LOADING
  *       → SCENE_3 → SCENE_4 ─CUT→ UI_3
  *    UI_3 ├─ I'M OK ─────────────→ UI_4 → SCENE_1 (back to riding)
  *         └─ NO RESPONSE / 0 → BEEP-BEEP → UI_5 → UI_6 → UI_7 → UI_8
@@ -33,6 +33,17 @@ import { ASSETS, CONFIG } from './assets.js';
 const T = CONFIG.autoSeconds;
 
 export const STATES = {
+  // Title screen. START SIMULATION (click or SPACE) → UI 1 system check.
+  INTRO: {
+    type: 'ui',
+    screen: 'Intro',
+    bare: true,
+    actions: { START: 'UI_1' },
+    primary: 'START',
+    hideHint: true,
+    hideHud: true,
+  },
+
   UI_1: {
     type: 'ui',
     screen: 'SystemReady',
@@ -77,7 +88,7 @@ export const STATES = {
     backdrop: 'freeze',
     next: 'SCENE_3',
     auto: CONFIG.loadingSeconds,
-    actions: { CANCEL: 'UI_1' },
+    actions: { CANCEL: 'INTRO' },
     pillar: 'DETECT',
     cue: 'loading',
   },
@@ -163,7 +174,7 @@ export const STATES = {
   UI_11: {
     type: 'ui',
     screen: 'ResponseComplete',
-    actions: { REPLAY: 'UI_1' },
+    actions: { REPLAY: 'INTRO' },
     primary: 'REPLAY',
     hint: 'REPLAY',
     pillar: 'RESPOND',
@@ -172,7 +183,7 @@ export const STATES = {
   },
 };
 
-export const INITIAL_STATE = 'UI_1';
+export const INITIAL_STATE = 'INTRO';
 export const PILLARS = ['DETECT', 'VERIFY', 'RESPOND'];
 
 export function isSkippable(state) {
