@@ -43,8 +43,8 @@ export const CONFIG = {
   videoSpeed: 2,
   /** UI 3 countdown, in seconds. */
   countdownSeconds: 10,
-  /** Milliseconds each countdown number stays on screen (500 → the 10 → 0 count takes 5 s). */
-  countdownStepMs: 500,
+  /** Milliseconds each countdown number stays on screen (1000 → a real 10 s countdown). */
+  countdownStepMs: 1000,
   /** LOADING (Windows-style dialog) after the crash, in seconds. */
   loadingSeconds: 0.8,
   /** Playable riding segment between Scene 1 and the crash. */
