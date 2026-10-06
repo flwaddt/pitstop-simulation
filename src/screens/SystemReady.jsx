@@ -27,14 +27,14 @@ export function StatusRows({ dim = false, checked = ROWS.length }) {
 
 /**
  * After the title screen, UI 1 runs a short system check — each row ticks
- * in — then presses START SIMULATION by itself. SPACE / click starts at once.
+ * in — then waits. The player decides when to press START SIMULATION
+ * (click, SPACE or tap); nothing starts by itself.
  */
 const STEP = 250;
 
 export default function SystemReady({ act }) {
   const [checked, setChecked] = useState(0);
-  const [pressed, setPressed] = useState(false);
-  const timers = useRef([]);
+    const timers = useRef([]);
 
   useEffect(() => {
     const t = timers.current;
@@ -48,8 +48,6 @@ export default function SystemReady({ act }) {
     );
     const ready = 200 + ROWS.length * STEP;
     t.push(setTimeout(() => playCue('safe'), ready));
-    t.push(setTimeout(() => setPressed(true), ready + 300));
-    t.push(setTimeout(() => act('START'), ready + 500));
     return () => t.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,7 +59,7 @@ export default function SystemReady({ act }) {
       band={ready ? { tone: 'green', text: 'SYSTEM READY' } : { tone: 'yellow', text: 'SYSTEM CHECK...' }}
       deco={{ spinnerLeft: true, spinnerRight: true, cursor: <Cursor /> }}
       footer={
-        <RetroButton data-primary className={pressed ? 'is-pressed' : ''} onClick={() => act('START')}>
+        <RetroButton data-primary className={ready ? 'is-waiting' : ''} onClick={() => act('START')}>
           START SIMULATION
         </RetroButton>
       }

@@ -1848,3 +1848,13 @@ body {
   color: var(--ink);
   cursor: pointer;
 }
+
+/* UI 1: checks done, START waits for the player */
+.rbtn.is-waiting {
+  animation: waitPulse 1s steps(2) infinite;
+}
+@keyframes waitPulse {
+  50% {
+    background: #fff7c2;
+  }
+}
