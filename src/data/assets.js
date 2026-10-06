@@ -43,8 +43,8 @@ export const CONFIG = {
   videoSpeed: 2,
   /** UI 3 countdown, in seconds. */
   countdownSeconds: 10,
-  /** Milliseconds each countdown number stays on screen (1500 → the 10 → 0 count takes 15 s). */
-  countdownStepMs: 1500,
+  /** Milliseconds each countdown number stays on screen (1000 → a real 10 s countdown). */
+  countdownStepMs: 1000,
   /** LOADING (Windows-style dialog) after the crash, in seconds. */
   loadingSeconds: 0.8,
   /** Playable riding segment between Scene 1 and the crash. */
@@ -56,12 +56,12 @@ export const CONFIG = {
    * like signals arriving. Seconds per screen (SPACE skips ahead).
    */
   autoSeconds: {
-    ui5: 5, // NO RESPONSE
-    ui6: 5.5, // ALERT SENT
-    ui7: 6, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
-    ui8: 6, // MONITOR ALERT      (auto-presses CONTACT 115)
-    ui9: 5.5, // CONTACTING 115
-    ui10: 7, // 115 RESPONSE       (vehicle drives to the rider)
+    ui5: 4.5, // NO RESPONSE
+    ui6: 5, // ALERT SENT
+    ui7: 5.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 5.5, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 5, // CONTACTING 115
+    ui10: 6.5, // 115 RESPONSE       (vehicle drives to the rider)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,
