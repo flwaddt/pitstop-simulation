@@ -5,6 +5,7 @@ import { Cursor, Doc, Floppy } from '../components/Pixel.jsx';
 import { StatusRows } from './SystemReady.jsx';
 import { CONFIG } from '../data/assets.js';
 import { playCue, playTick } from '../lib/audio.js';
+import { isTouch } from '../lib/device.js';
 
 /**
  * UI 3 — full-screen takeover after Scene 4.
@@ -108,10 +109,10 @@ export default function AreYouOk({ act }) {
               NO RESPONSE
             </RetroButton>
           </div>
-          <p className={`modal-keys ${nudge ? 'nudge' : ''}`} key={nudge} aria-hidden="true">
+          {!isTouch && <p className={`modal-keys ${nudge ? 'nudge' : ''}`} key={nudge} aria-hidden="true">
             <kbd>◀</kbd>
             <kbd>▶</kbd> CHOOSE · <kbd>SPACE</kbd> CONFIRM
-          </p>
+          </p>}
         </div>
       }
     >

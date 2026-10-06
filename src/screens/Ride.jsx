@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { CONFIG } from '../data/assets.js';
 import { playCue, unlockAudio } from '../lib/audio.js';
+import { isTouch } from '../lib/device.js';
+import TouchPad from '../components/TouchPad.jsx';
 
 /**
  * RIDE — playable pixel street between Scene 1 and the crash.
@@ -319,7 +321,7 @@ export default function Ride({ act }) {
           <i className="ride-dot" /> PITSTOP ACTIVE
         </div>
         {warn && <div className="ride-warn">! RIDER AHEAD !</div>}
-        <div className="ride-keys" aria-hidden="true">
+        {isTouch ? <TouchPad nextLabel="CONTINUE" /> : <div className="ride-keys" aria-hidden="true">
           <span className="kgrp">
             <kbd>W</kbd>
             <kbd>A</kbd>
@@ -336,7 +338,7 @@ export default function Ride({ act }) {
           RIDE
           <span className="sep">·</span>
           <kbd className="wide">SPACE</kbd> CONTINUE
-        </div>
+        </div>}
       </div>
     </div>
   );

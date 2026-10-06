@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { RetroButton } from '../components/RetroWindow.jsx';
 import { ASSETS } from '../data/assets.js';
+import { isTouch } from '../lib/device.js';
 
 /**
  * INTRO — title screen before UI 1.
@@ -56,11 +57,11 @@ export default function Intro({ act }) {
           <RetroButton data-primary onClick={() => act('START')}>
             START SIMULATION
           </RetroButton>
-          <p className="intro-press">
-            PRESS <kbd>SPACE</kbd>
-          </p>
+          <p className="intro-press">{isTouch ? 'TAP TO START' : <>PRESS <kbd>SPACE</kbd></>}</p>
         </div>
-        <p className="intro-meta">SOUND ON · SPACE NEXT · W A S D / ← ↑ ↓ → RIDE</p>
+        <p className="intro-meta">
+          {isTouch ? 'SOUND ON · PLAY IN LANDSCAPE · TAP NEXT TO MOVE ON' : 'SOUND ON · SPACE NEXT · W A S D / ← ↑ ↓ → RIDE'}
+        </p>
         <p className="intro-credit">
           CINEMATIC SCENES GENERATED WITH GOOGLE VEO · ALL IDEAS &amp; PROMPTS BY TEAM PITSTOP
         </p>

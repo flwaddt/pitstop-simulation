@@ -52,6 +52,14 @@ pixel icons, map and countdown ring: `src/components/`. Styles: `src/styles/`.
 `scene-02-crash.mp4` had stray "LEFT → LEFT / RIGHT → LEFT" text in its first 4 seconds;
 it was blurred out of the road surface. The clean clip is the one in `public/assets/video/`.
 
+## Phones
+
+The same link works on phones and tablets: tap **NEXT ▸** (bottom right) instead of Space,
+tap the answer buttons on ARE YOU OK?, and use the on-screen ◀ ▲ ▼ ▶ pad in the ride.
+START goes fullscreen and locks landscape where the browser allows (Android). In portrait a
+"rotate your phone" prompt appears; *PLAY UPRIGHT* dismisses it. The START tap also unlocks
+video sound on iPhone.
+
 ## Controls (keyboard first)
 
 | Key | What it does |

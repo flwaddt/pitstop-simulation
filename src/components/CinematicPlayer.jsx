@@ -88,6 +88,27 @@ function CinematicPlayer({ stateId, state, mode, preloadSrc, muted, onEnded, onM
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateId, preloadSrc]);
 
+  // iOS only lets a <video> play with sound if play() first ran inside a tap.
+  // App fires 'pitstop:prime' from the START tap; each layer plays a moment and pauses.
+  useEffect(() => {
+    const prime = (e) => {
+      layers.forEach((r, i) => {
+        const el = r.current;
+        if (!el) return;
+        if (!el.dataset.src && e.detail?.src) {
+          el.dataset.src = e.detail.src;
+          el.src = e.detail.src;
+        }
+        el.muted = false;
+        const p = el.play();
+        if (p?.then) p.then(() => { if (stateRef.current.state.type !== 'video') { el.pause(); el.currentTime = 0; } }).catch(() => {});
+      });
+    };
+    window.addEventListener('pitstop:prime', prime);
+    return () => window.removeEventListener('pitstop:prime', prime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Freeze when leaving video playback.
   useEffect(() => {
     if (mode === 'play') return;

@@ -1,4 +1,5 @@
 import { PILLARS } from '../data/states.js';
+import { isTouch } from '../lib/device.js';
 
 /**
  * Thin overlay outside the window: DETECT · VERIFY · RESPOND tracker,
@@ -50,8 +51,8 @@ export default function Hud({ state, muted, onToggleMute, onRestart, onSpace, on
 
       {spaceHint && (
         <button type="button" className="keyhint" onClick={onSpace}>
-          <kbd>SPACE</kbd>
-          <span>{spaceHint}</span>
+          {!isTouch && <kbd>SPACE</kbd>}
+          <span>{isTouch && spaceHint === 'SKIP' ? 'NEXT' : spaceHint} ▸</span>
         </button>
       )}
     </div>

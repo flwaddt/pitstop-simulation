@@ -7,6 +7,9 @@ import { upcomingVideo } from './data/states.js';
 import useSimulation from './hooks/useSimulation.js';
 import { AutoCtx } from './lib/autoCtx.js';
 import { isMuted, onMuteChange, playCue, setMusic, setMuted, unlockAudio } from './lib/audio.js';
+import { ASSETS } from './data/assets.js';
+import { enterLandscape, isTouch } from './lib/device.js';
+import RotateHint from './components/RotateHint.jsx';
 
 export default function App() {
   const { stateId, visit, state, act, restart } = useSimulation();
@@ -36,6 +39,10 @@ export default function App() {
   const screenAct = useCallback(
     (action) => {
       unlockAudio();
+      if (stateId === 'INTRO' && action === 'START') {
+        window.dispatchEvent(new CustomEvent('pitstop:prime', { detail: { src: ASSETS.video.scene1 } }));
+        enterLandscape();
+      }
       if (action !== 'OK' && action !== 'NO_RESPONSE') playCue('click');
       act(action, stateId);
     },
@@ -80,7 +87,7 @@ export default function App() {
   const Screen = state.type === 'ui' ? SCREENS[state.screen] : null;
 
   return (
-    <main className={`app mode-${mode}`} data-state={stateId}>
+    <main className={`app mode-${mode} ${isTouch ? 'is-touch' : ''}`} data-state={stateId}>
       <CinematicPlayer
         stateId={stateId}
         state={state}
@@ -104,6 +111,8 @@ export default function App() {
           </div>
         </AutoCtx.Provider>
       )}
+
+      {isTouch && stateId !== 'INTRO' && <RotateHint />}
 
       {missing && missing.id === stateId && <AssetPlaceholder stateId={stateId} src={missing.src} onContinue={skip} />}
 
