@@ -1,28 +1,19 @@
-import PixelButton, { PixelPanel } from '../components/Button.jsx';
-import { Brand, Headline, Tag } from '../components/Brand.jsx';
-import Checkmark from '../components/Checkmark.jsx';
+import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
+import { Check, Cursor } from '../components/Pixel.jsx';
 
-/** Safe branch, step 1 (UI reference 2). */
+/** UI 4 — safe branch. CONTINUE returns to Scene 1 (normal riding). */
 export default function StatusVerified({ act }) {
   return (
-    <div className="scr">
-      <Brand tone="green" />
-      <Tag tone="green">Crash signal received</Tag>
-      <div className="check-wrap">
-        <Checkmark />
+    <RetroWindow
+      band={{ tone: 'green', text: 'STATUS VERIFIED' }}
+      deco={{ cursor: <Cursor color="#25b3c8" /> }}
+      footer={<RetroButton onClick={() => act('CONTINUE')} autoFocus>CONTINUE</RetroButton>}
+    >
+      <div className="col">
+        <span className="tile pop"><Check /></span>
+        <p className="t-green t-hero">RIDER CONFIRMED SAFE</p>
+        <p className="obox obox-green">EMERGENCY RESPONSE NOT REQUIRED</p>
       </div>
-      <div className="stack-tight">
-        <Headline tone="green">Status verified</Headline>
-        <Tag tone="white">Rider confirmed safe</Tag>
-      </div>
-      <PixelPanel tone="blue" className="info-panel">
-        Emergency response
-        <br />
-        not required
-      </PixelPanel>
-      <PixelButton tone="green" onClick={() => act('CONTINUE')} autoFocus>
-        Continue
-      </PixelButton>
-    </div>
+    </RetroWindow>
   );
 }

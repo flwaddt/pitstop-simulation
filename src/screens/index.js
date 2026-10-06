@@ -1,28 +1,28 @@
-import StartScreen from './StartScreen.jsx';
-import SignalReceived from './SignalReceived.jsx';
+import SystemReady from './SystemReady.jsx';
+import Loading from './Loading.jsx';
+import CrashSignal from './CrashSignal.jsx';
 import AreYouOk from './AreYouOk.jsx';
 import StatusVerified from './StatusVerified.jsx';
-import SafeOutcome from './SafeOutcome.jsx';
-import WaitVerify from './WaitVerify.jsx';
-import EmergencyAlert from './EmergencyAlert.jsx';
-import GPSFromPhone from './GPSFromPhone.jsx';
+import NoResponse from './NoResponse.jsx';
+import AlertSent from './AlertSent.jsx';
 import EmergencyContact from './EmergencyContact.jsx';
-import CallSMS from './CallSMS.jsx';
-import ResponseSimulation from './ResponseSimulation.jsx';
-import EndScreen from './EndScreen.jsx';
+import MonitorAlert from './MonitorAlert.jsx';
+import Contacting115 from './Contacting115.jsx';
+import Response115 from './Response115.jsx';
+import ResponseComplete from './ResponseComplete.jsx';
 
 /** Screen registry — states.js refers to screens by these names. */
 export const SCREENS = {
-  StartScreen,
-  SignalReceived,
+  SystemReady,
+  Loading,
+  CrashSignal,
   AreYouOk,
   StatusVerified,
-  SafeOutcome,
-  WaitVerify,
-  EmergencyAlert,
-  GPSFromPhone,
+  NoResponse,
+  AlertSent,
   EmergencyContact,
-  CallSMS,
-  ResponseSimulation,
-  EndScreen,
+  MonitorAlert,
+  Contacting115,
+  Response115,
+  ResponseComplete,
 };

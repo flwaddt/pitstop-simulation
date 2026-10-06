@@ -3,21 +3,20 @@
   position: absolute;
   inset: 0;
   background: #000;
-  transition: filter 1.3s var(--ease-out), transform 1.3s var(--ease-out), opacity 0.8s;
-  will-change: filter, transform;
+  transition: opacity 0.5s, filter 0.6s;
 }
 .cine-hidden {
   opacity: 0;
+  transition: none; /* hard CUT from Scene 4 to UI 3 */
 }
 .cine-play {
   opacity: 1;
 }
-/* Frozen last frame behind the phone UI */
-.cine-backdrop {
-  filter: blur(16px) brightness(0.3) saturate(0.75);
-  transform: scale(1.06);
+/* LOADING: crash frame frozen behind the dialog */
+.cine-freeze {
+  opacity: 1;
+  filter: brightness(0.55) saturate(0.7);
 }
-
 .cine-layer {
   position: absolute;
   inset: 0;
@@ -25,94 +24,67 @@
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.7s ease;
+  transition: opacity 0.6s ease;
   pointer-events: none;
 }
 .cine-layer.is-active {
   opacity: 1;
 }
 .cine-layer[data-fx='crossfade'] {
-  transition-duration: 0.45s;
+  transition-duration: 0.4s;
+}
+.cine-layer[data-fx='cut'] {
+  transition: none;
 }
 .cine-layer.is-active[data-fx='fade'] {
-  animation: cineFade 1.2s ease both;
+  animation: cineFade 0.9s ease both;
 }
-/* CRASH → IMPACT: the camera "finds" the detector */
-.cine-layer.is-active[data-fx='discover'] {
-  transition-duration: 0.9s;
-  animation: cineDiscover 1.8s var(--ease-out) both;
+@keyframes cineFade {
+  from {
+    filter: brightness(0.15);
+  }
 }
-
 .cine-grade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 80% 75% at 50% 50%, transparent 55%, rgb(5 7 10 / 0.45) 100%);
+  background: radial-gradient(ellipse 85% 80% at 50% 50%, transparent 60%, rgb(0 0 0 / 0.35));
 }
 
-/* Tone glow + dim behind interactive screens */
-.scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1s ease, background 0.8s ease;
-  background:
-    radial-gradient(ellipse 38% 55% at 50% 52%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 70%),
-    linear-gradient(rgb(17 21 28 / 0.55), rgb(17 21 28 / 0.75));
-}
-.mode-backdrop .scrim {
-  opacity: 1;
-}
-
-@keyframes cineFade {
-  from {
-    filter: brightness(0.2);
-  }
-}
-@keyframes cineDiscover {
-  0% {
-    transform: scale(1.16);
-    filter: blur(9px) brightness(1.35) saturate(0.6);
-  }
-  45% {
-    filter: blur(2px) brightness(1.08);
-  }
-  100% {
-    transform: scale(1);
-    filter: none;
-  }
-}
-
-/* Missing asset fallback */
+/* Missing asset */
 .placeholder {
   position: absolute;
   inset: 0;
-  z-index: 15;
+  z-index: 25;
   display: grid;
   place-content: center;
   justify-items: center;
   gap: 14px;
   padding: 24px;
   text-align: center;
-  background:
-    repeating-linear-gradient(45deg, rgb(255 255 255 / 0.025) 0 12px, transparent 12px 24px),
-    var(--pitstop-bg);
+  background: var(--page);
+  font-family: var(--font-term);
+  container-type: inline-size;
+}
+.placeholder .micro {
+  margin: 0;
+  color: #8d968f;
+  font-size: 20px;
 }
 .placeholder-file {
   margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(22px, 3vw, 34px);
-  letter-spacing: 0.04em;
+  font-size: 34px;
+  color: var(--yellow);
 }
 .placeholder-hint {
   margin: 0;
   max-width: 52ch;
-  color: var(--pitstop-muted);
-  line-height: 1.5;
+  font-size: 20px;
+  color: var(--cream);
 }
 .placeholder code {
-  font-family: var(--font-mono);
-  color: var(--pitstop-blue);
+  color: var(--cyan);
+}
+.placeholder .rbtn {
+  font-size: 26px;
 }

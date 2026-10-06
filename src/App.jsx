@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import CinematicPlayer from './components/CinematicPlayer.jsx';
-import PhoneUI from './components/PhoneUI.jsx';
 import Hud from './components/Hud.jsx';
-import Transition from './components/Transition.jsx';
 import AssetPlaceholder from './components/AssetPlaceholder.jsx';
 import { SCREENS } from './screens/index.js';
 import { upcomingVideo } from './data/states.js';
 import useSimulation from './hooks/useSimulation.js';
-import { isMuted, onMuteChange, setMuted, unlockAudio } from './lib/audio.js';
+import { isMuted, onMuteChange, playCue, setMusic, setMuted, unlockAudio } from './lib/audio.js';
 
 export default function App() {
-  const { stateId, state, act, restart } = useSimulation();
+  const { stateId, visit, state, act, restart } = useSimulation();
   const [muted, setMutedState] = useState(isMuted());
   const [missing, setMissing] = useState(null);
   const [isFs, setIsFs] = useState(false);
@@ -22,11 +20,22 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', h);
   }, []);
 
-  // Screens call act(action); bind it to the state they belong to so stale
-  // timers or late clicks can't fire into a later state.
+  // Timed screens advance on their own.
+  useEffect(() => {
+    if (state.type !== 'ui' || !state.auto) return;
+    const t = setTimeout(() => act('AUTO', stateId), state.auto * 1000);
+    return () => clearTimeout(t);
+  }, [visit, stateId, state, act]);
+
+  // Optional music only under UI screens (never under the videos).
+  useEffect(() => {
+    setMusic(state.type === 'ui' && stateId !== 'UI_1');
+  }, [state.type, stateId]);
+
   const screenAct = useCallback(
     (action) => {
-      if (action === 'START') unlockAudio();
+      unlockAudio();
+      if (action !== 'OK' && action !== 'NO_RESPONSE') playCue('click');
       act(action, stateId);
     },
     [act, stateId],
@@ -35,16 +44,16 @@ export default function App() {
   const onEnded = useCallback((id) => act('ENDED', id), [act]);
   const onMissing = useCallback((id, src) => setMissing({ id, src }), []);
   const skip = useCallback(() => act('NEXT', stateId), [act, stateId]);
+  const canSkip = state.type === 'video' || Boolean(state.auto);
 
-  // → or N skips a cinematic scene.
   useEffect(() => {
-    if (state.type !== 'video') return;
+    if (!canSkip) return;
     const h = (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'n') skip();
+      if (e.key === 'ArrowRight') skip();
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [state.type, skip]);
+  }, [canSkip, skip]);
 
   const toggleFs = useCallback(() => {
     try {
@@ -53,11 +62,11 @@ export default function App() {
     } catch {}
   }, []);
 
-  const mode = stateId === 'START' ? 'hidden' : state.type === 'video' ? 'play' : 'backdrop';
+  const mode = state.type === 'video' ? 'play' : state.backdrop === 'freeze' ? 'freeze' : 'hidden';
   const Screen = state.type === 'ui' ? SCREENS[state.screen] : null;
 
   return (
-    <main className={`app tone-${state.tone || 'neutral'} mode-${mode}`} data-state={stateId}>
+    <main className={`app mode-${mode}`} data-state={stateId}>
       <CinematicPlayer
         stateId={stateId}
         state={state}
@@ -67,43 +76,35 @@ export default function App() {
         onEnded={onEnded}
         onMissing={onMissing}
       />
-      <div className="scrim" aria-hidden="true" />
 
-      {Screen && state.phone && (
-        <div className="stage">
-          <PhoneUI tone={state.tone}>
-            <Transition id={stateId}>
-              <Screen act={screenAct} state={state} stateId={stateId} />
-            </Transition>
-          </PhoneUI>
+      {Screen && (
+        <div className={`stage ${state.backdrop === 'freeze' ? 'stage-overlay' : ''}`} key={visit}>
+          {state.backdrop === 'freeze' ? (
+            <Screen act={screenAct} state={state} />
+          ) : (
+            <div className="win-wrap">
+              <Screen act={screenAct} state={state} />
+            </div>
+          )}
         </div>
       )}
 
-      {Screen && !state.phone && (
-        <Transition id={stateId} className="stage-full">
-          <Screen act={screenAct} state={state} stateId={stateId} />
-        </Transition>
-      )}
+      {missing && missing.id === stateId && <AssetPlaceholder stateId={stateId} src={missing.src} onContinue={skip} />}
 
-      {missing && missing.id === stateId && (
-        <AssetPlaceholder stateId={stateId} src={missing.src} onContinue={skip} />
-      )}
-
-      {stateId !== 'START' && (
-        <Hud
-          state={state}
-          stateId={stateId}
-          muted={muted}
-          onToggleMute={() => {
-            unlockAudio();
-            setMuted(!muted);
-          }}
-          onRestart={restart}
-          onSkip={skip}
-          onFullscreen={toggleFs}
-          isFullscreen={isFs}
-        />
-      )}
+      <Hud
+        state={state}
+        stateId={stateId}
+        muted={muted}
+        canSkip={canSkip}
+        onToggleMute={() => {
+          unlockAudio();
+          setMuted(!muted);
+        }}
+        onRestart={restart}
+        onSkip={skip}
+        onFullscreen={toggleFs}
+        isFullscreen={isFs}
+      />
     </main>
   );
 }

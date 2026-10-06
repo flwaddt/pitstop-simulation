@@ -1,4 +1,4 @@
-import PixelButton from './Button.jsx';
+import { RetroButton } from './RetroWindow.jsx';
 
 /**
  * Shown when a scene's video file can't be loaded. Names the file that is
@@ -13,9 +13,9 @@ export default function AssetPlaceholder({ stateId, src, onContinue }) {
       <p className="placeholder-hint">
         Put the clip at <code>public/{(src || '').replace(/^\.?\//, '')}</code> or change its path in <code>src/data/assets.js</code>.
       </p>
-      <PixelButton tone="ghost" onClick={onContinue}>
+      <RetroButton onClick={onContinue}>
         Continue without it
-      </PixelButton>
+      </RetroButton>
     </div>
   );
 }

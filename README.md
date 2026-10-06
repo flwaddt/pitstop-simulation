@@ -1,70 +1,54 @@
 # PITSTOP — Interactive Crash Simulation
 
-Cinematic, branching product simulation for the PITSTOP helmet-mounted crash detector.
-**Detect. Verify. Respond.**
+Interactive, branching simulation of the PITSTOP helmet-mounted crash detector.
+**Detect → Verify → Respond.** Follows `reference/PITSTOP_MASTER_INTERACTIVE_FLOW_A-Z.docx`.
 
-## Run
+Live: https://flwaddt.github.io/pitstop-simulation/
+
+## Flow
+
+```
+UI 1 SYSTEM READY → SCENE 1 normal riding → SCENE 2 crash → LOADING (Win98 dialog)
+→ SCENE 3 PITSTOP → Bluetooth → Phone → SCENE 4 phone shows "ARE YOU OK?" ─CUT→ UI 3
+UI 3 (real 10 → 0 countdown)
+ ├─ I'M OK ──────────────→ UI 4 STATUS VERIFIED → back to SCENE 1
+ └─ NO RESPONSE / 0 → silence · low hit · BEEP—BEEP → UI 5 NO RESPONSE
+      → UI 6 ALERT SENT (Contact + Monitor at once) → UI 7 EMERGENCY CONTACT
+      → UI 8 MONITOR ALERT → UI 9 CONTACTING 115 (Monitor → 115)
+      → UI 10 115 RESPONSE → UI 11 RESPONSE COMPLETE → REPLAY
+```
+
+PITSTOP never calls 115 and has no GPS/SIM: the phone sends the alert and live location,
+and the Monitor calls 115.
+
+## Run / build
 
 ```bash
 npm install
-npm run dev          # local dev server
-npm run build        # dist/  → upload to any static host (Netlify, Vercel, GitHub Pages)
-npm run build:single # dist-single/ → one index.html with JS/CSS inlined + assets/ folder
+npm run dev           # local dev
+npm run build         # dist/ — deployed to GitHub Pages by .github/workflows/deploy.yml
+npm run build:single  # dist-single/ — one index.html (JS, CSS, fonts inlined) + assets/
 ```
 
-Open the built `index.html` through a web server (not by double-clicking), because videos load over HTTP.
-Use Chrome or Edge in fullscreen (the ⛶ button) on a 16:9 screen for judging.
+Fonts (Press Start 2P, VT323) are bundled, so the site works offline once loaded.
 
-## Flow (state machine)
+## Change things — `src/data/assets.js`
 
-```
-START → NORMAL_RIDING → CRASH → IMPACT_DETECTED
-      → [BLUETOOTH] → [PHONE]            (future Scene 4/5 — skipped until assets exist)
-      → PHONE_SIGNAL (crash signal received, UI ref 1)
-      → ARE_YOU_OK  (10 s countdown)
-          ├─ I'M OK ─────────────→ STATUS_VERIFIED → SAFE_OUTCOME → restart
-          └─ NO RESPONSE / timeout → NO_RESPONSE → WAIT_VERIFY (8 s)
-               → EMERGENCY_ALERT → GPS_FROM_PHONE → EMERGENCY_CONTACT
-               → CALL_SMS → RESPONSE_SIMULATION → END → restart
-```
+- **Videos:** `ASSETS.video.*` → files in `public/assets/video/`.
+- **Loading step:** `CONFIG.loadingMode` = `'html'` (crisp dialog, ~1.4 s, default) or `'video'`
+  (plays `loading-dialog.mp4`).
+- **Timings:** countdown, auto-advance for UI 5 / 6 / 9 / 10.
+- **Sound:** every cue has a built-in retro synth fallback. Put a file in `public/assets/audio/`
+  and set its path in `ASSETS.audio` to replace one. `ASSETS.audio.music` loops under the UI
+  screens only — use music you have the rights to publish.
+- **UI 2** is not in the master state machine; `CONFIG.includeUI2 = true` shows it after Scene 3.
 
-All states live in `src/data/states.js`. Each declares its type (video / ui / route), asset,
-next state, available actions, duration, tone colour, sound cue and caption.
+States and transitions: `src/data/states.js`. Screens: `src/screens/`. Window frame,
+pixel icons, map and countdown ring: `src/components/`. Styles: `src/styles/`.
 
-## Change or add assets — `src/data/assets.js`
-
-- Swap a video: replace the file in `public/assets/video/` or change its path.
-- **Add Scene 4 / Scene 5:** drop the clip in `public/assets/video/` and set
-  `bluetooth:` / `phone:` in `ASSETS.video`. The states already exist in the machine
-  and start playing automatically once their asset is not `null`.
-- Sounds: every cue has a synthesized fallback. Set a file path in `ASSETS.audio` to replace one.
-- Timings (countdown, verify wait, GPS search, vehicle travel) are in `CONFIG`.
-- If a video file is missing, the app shows a placeholder naming the expected file.
-
-## Structure
-
-```
-src/
-  components/  CinematicPlayer (2-layer preload + crossfade), PhoneUI, Button (PixelButton/PixelPanel),
-               ProgressIndicator (countdown ring), Transition, Hud, Brand, PixelArt, Checkmark,
-               VoxelMap (fictional map), AssetPlaceholder
-  screens/     StartScreen, SignalReceived, AreYouOk, StatusVerified, SafeOutcome, WaitVerify,
-               EmergencyAlert, GPSFromPhone, EmergencyContact, CallSMS, ResponseSimulation, EndScreen
-  data/        states.js, assets.js
-  hooks/       useSimulation (state machine), useCountdown
-  lib/         audio.js (optional sound layer)
-  styles/      globals.css (design tokens, HUD), cinematic.css, ui.css
-public/assets/ video/, img/, audio/
-reference/     UI reference images (not shipped; visual source of truth only)
-```
-
-## Product claims
-
-The UI keeps hardware and simulation separate: PITSTOP detects the impact and sends the signal
-over Bluetooth (no GPS or cellular hardware); the phone provides GPS, network, call and SMS;
-the emergency contact, call/SMS and response vehicle are a simulation of the intended workflow.
-No real call, SMS or dispatch happens.
+`scene-02-crash.mp4` had stray "LEFT → LEFT / RIGHT → LEFT" text in its first 4 seconds;
+it was blurred out of the road surface. The clean clip is the one in `public/assets/video/`.
 
 ## Controls
 
-Skip scene: button or → key. HUD top-right: sound, fullscreen, restart.
+Skip scene / next: button or → key. Top right: sound, fullscreen, restart.

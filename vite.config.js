@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), ...(mode === 'single' ? [viteSingleFile()] : [])],
   build: {
     outDir: mode === 'single' ? 'dist-single' : 'dist',
-    assetsInlineLimit: 0,
+    // single mode inlines the fonts too, so the page is one HTML file + videos
+    assetsInlineLimit: mode === 'single' ? 1024 * 1024 : 0,
   },
 }));

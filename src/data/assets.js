@@ -1,61 +1,57 @@
 /**
  * PITSTOP — central asset configuration.
- *
- * Every media file the simulation uses is referenced from here, so swapping
- * a video or adding a sound is a one-line change.
- *
- * Paths are relative to /public. BASE_URL keeps them working when the build
- * is hosted from a sub-folder.
+ * Every media file is referenced from here; swapping one is a one-line change.
+ * Paths are relative to /public.
  */
 const base = import.meta.env.BASE_URL;
 const p = (path) => (path ? `${base}${path}` : null);
 
 export const ASSETS = {
   video: {
-    normalRiding: p('assets/video/scene-01-normal-riding.mp4'),
-    crash: p('assets/video/scene-02-crash.mp4'),
-    impactDetected: p('assets/video/scene-03-impact-detected.mp4'),
-
-    // FUTURE — Scene 4 (PITSTOP → Bluetooth → Phone) and Scene 5 (Phone).
-    // Leave as null until the clips exist. A state whose asset is null is
-    // skipped automatically; set a path here and it plays in sequence.
-    // e.g. bluetooth: p('assets/video/scene-04-bluetooth.mp4'),
-    bluetooth: null,
-    phone: null,
-  },
-
-  image: {
-    startPoster: p('assets/img/start-poster.jpg'),
+    scene1: p('assets/video/scene-01-normal-riding.mp4'),
+    scene2: p('assets/video/scene-02-crash.mp4'),
+    scene3: p('assets/video/scene-03-bluetooth-to-phone.mp4'),
+    scene4: p('assets/video/scene-04-are-you-ok-phone.mp4'),
+    /** Only used when CONFIG.loadingMode === 'video'. */
+    loading: p('assets/video/loading-dialog.mp4'),
   },
 
   /**
-   * Optional audio. Every cue has a built-in synthesized fallback (see
-   * src/lib/audio.js). Drop a file into /public/assets/audio and set its
-   * path here to replace the synth tone, e.g.
-   *   alert: p('assets/audio/alert.mp3'),
+   * Optional audio files. Every cue has a synthesized fallback in
+   * src/lib/audio.js, so all of these can stay null.
+   *   music — loops quietly under the UI screens (not under the videos).
+   *           Use only music you have the rights to publish.
    */
   audio: {
-    detect: null,
-    bluetooth: null,
-    alert: null,
+    music: null,
+    click: null,
+    loading: null,
+    activate: null,
     tick: null,
-    warning: null,
-    emergency: null,
-    locate: null,
-    ring: null,
-    safe: null,
+    zeroHit: null,
+    alarm: null,
     confirm: null,
+    dial: null,
+    safe: null,
   },
 };
 
-/** Presentation options. */
 export const CONFIG = {
-  areYouOkSeconds: 10,
-  verifySeconds: 8,
-  /** Seconds the GPS screen "searches" before the fix is shown. */
-  gpsAcquireSeconds: 2.4,
-  /** Seconds for the response vehicle to reach the rider on the map. */
-  responseTravelSeconds: 11,
-  /** Videos keep their own soundtrack. Set false to start muted. */
+  /** UI 3 countdown, in seconds. */
+  countdownSeconds: 10,
+  /**
+   * LOADING transition:
+   *  'html'  — crisp Windows-style dialog drawn in HTML, ~1.4 s (matches spec)
+   *  'video' — plays ASSETS.video.loading instead
+   */
+  loadingMode: 'html',
+  loadingSeconds: 1.4,
+  /** Auto-advance timings for screens without a button. */
+  noResponseSeconds: 3.2, // UI 5
+  alertSentSeconds: 4.5, // UI 6
+  contacting115Seconds: 5, // UI 9
+  response115Seconds: 7.5, // UI 10
+  /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
+  includeUI2: false,
   soundOnByDefault: true,
 };

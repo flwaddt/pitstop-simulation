@@ -1,63 +1,58 @@
-/* Layout: one fullscreen cinematic stage. Video fills the frame; during
-   interaction the last frame freezes, blurs and the phone UI takes the centre.
-   Deliberately single-theme (dark), matching the UI references. */
+/* Layout: one fullscreen stage. Videos fill the frame; every UI state is a
+   16:9-ish retro pixel window centred on a dark field (UI 1 = master ref).
+   Single deliberate dark look. */
 :root {
-  /* Design tokens — sourced from the UI reference images */
-  --pitstop-bg: #11151c;
-  --pitstop-bg-2: #171d27;
-  --pitstop-panel: #18212d;
-  --pitstop-panel-2: #1f2a39;
-  --pitstop-border: #2f4560;
-  --pitstop-blue: #58aefc;
-  --pitstop-blue-deep: #1f5a98;
-  --pitstop-green: #5fd68b;
-  --pitstop-green-deep: #2a7d4b;
-  --pitstop-red: #ff4d4a;
-  --pitstop-red-deep: #a8242a;
-  --pitstop-white: #e8edf3;
-  --pitstop-muted: #a3aebb;
-  --pitstop-dim: #5f6b7a;
-  --pitstop-steel-1: #f4f7fa;
-  --pitstop-steel-2: #9aa3ae;
+  /* frame */
+  --frame: #b5b8bb;
+  --frame-hi: #eceeef;
+  --frame-lo: #6e7276;
+  --ink: #111111;
+  /* workspace */
+  --ws: #1a221f;
+  --ws-dot: rgb(150 170 160 / 0.26);
+  --card: #1f2622;
+  /* colour language: red = crash/emergency · cyan = detection/BT/data ·
+     green = safe/verified · yellow = warning */
+  --green: #4cc552;
+  --green-t: #55d35b;
+  --red: #e62e25;
+  --red-t: #ff3b30;
+  --cyan: #3ccbe0;
+  --yellow: #f7d917;
+  --cream: #f1deb3;
+  --win-blue: #2f6fd6;
+  --page: #0e1311;
 
-  --font-display: 'Saira Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
-  --font-body: 'Saira', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
-  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --tone: var(--pitstop-blue);
+  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+  --font-term: 'VT323', 'Courier New', monospace;
+  --font-win: Tahoma, 'MS Sans Serif', Geneva, Verdana, sans-serif;
   color-scheme: dark;
 }
 
 * {
   box-sizing: border-box;
 }
-
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
 }
-
 body {
-  background: var(--pitstop-bg);
-  color: var(--pitstop-white);
-  font-family: var(--font-body);
+  background: var(--page);
+  color: var(--cream);
+  font-family: var(--font-term);
   overflow: hidden;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: none;
 }
-
 button {
   font: inherit;
   color: inherit;
 }
-
 :focus-visible {
-  outline: 2px solid var(--pitstop-blue);
-  outline-offset: 3px;
+  outline: 2px dashed var(--yellow);
+  outline-offset: 2px;
 }
-
 .sr {
   position: absolute;
   width: 1px;
@@ -71,29 +66,20 @@ button {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: var(--pitstop-bg);
-}
-.app.tone-blue,
-.app.tone-mixed,
-.app.tone-neutral {
-  --tone: var(--pitstop-blue);
-}
-.app.tone-green {
-  --tone: var(--pitstop-green);
-}
-.app.tone-red {
-  --tone: var(--pitstop-red);
+  background:
+    radial-gradient(circle, rgb(120 140 130 / 0.12) 1px, transparent 1.5px) 0 0 / 10px 10px,
+    var(--page);
 }
 
 /* ─── HUD ─────────────────────────────────────────────────────────── */
 .hud {
   position: absolute;
   inset: 0;
+  z-index: 30;
   pointer-events: none;
-  z-index: 20;
-  animation: fadeIn 0.8s 0.2s both;
 }
-.hud > * {
+.hud > *,
+.hud-top > * {
   pointer-events: auto;
 }
 .hud-top {
@@ -101,195 +87,151 @@ button {
   top: 0;
   left: 0;
   right: 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  height: 46px;
+  display: flex;
   align-items: center;
-  gap: 16px;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
-  background: linear-gradient(to bottom, rgb(8 11 16 / 0.55), transparent);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
   pointer-events: none;
 }
-.hud-top > * {
-  pointer-events: auto;
+.mode-play .hud-top {
+  background: linear-gradient(rgb(0 0 0 / 0.55), transparent);
 }
-.hud-mark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 18px;
-  letter-spacing: 0.14em;
-  color: var(--pitstop-white);
-  opacity: 0.85;
-}
-
 .pillars {
   display: flex;
-  gap: 22px;
+  gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
+  font-family: var(--font-term);
+  font-size: 22px;
+  letter-spacing: 0.08em;
 }
-.pillar {
+.pl {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.16em;
-  color: var(--pitstop-dim);
-  transition: color 0.5s;
+  gap: 7px;
+  color: #56605b;
 }
-.pillar-dot {
-  width: 8px;
-  height: 8px;
+.pl i {
+  width: 9px;
+  height: 9px;
   background: currentColor;
-  opacity: 0.5;
-  transition: all 0.5s;
+  box-shadow: 0 0 0 1px #000;
 }
-.pillar-active {
-  color: var(--tone);
-}
-.pillar-active .pillar-dot {
-  opacity: 1;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 25%, transparent), 0 0 12px var(--tone);
-  animation: blink 1.4s steps(2) infinite;
-}
-.pillar-done {
-  color: var(--pitstop-white);
-}
-.pillar-done .pillar-dot {
-  opacity: 1;
-}
-.pillar-skipped {
-  color: color-mix(in srgb, var(--pitstop-green) 70%, var(--pitstop-dim));
-}
-.pillar-note {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.pl small {
+  font-size: 15px;
   opacity: 0.8;
 }
-
-.hud-ctrls {
-  justify-self: end;
-  display: flex;
-  gap: 8px;
+.pl-done {
+  color: #d8d2c2;
 }
-.hud-btn {
-  width: 38px;
-  height: 38px;
+.pl-active.pl-detect {
+  color: var(--cyan);
+}
+.pl-active.pl-verify {
+  color: var(--yellow);
+}
+.pl-active.pl-respond {
+  color: var(--red-t);
+}
+.pl-active i {
+  animation: blink 0.8s steps(2) infinite;
+}
+.pl-skip {
+  color: var(--green-t);
+}
+.hud-ctrls {
+  display: flex;
+  gap: 6px;
+}
+.hbtn {
+  width: 34px;
+  height: 30px;
   display: grid;
   place-items: center;
-  border: 1px solid rgb(232 237 243 / 0.18);
-  background: rgb(10 14 20 / 0.45);
-  backdrop-filter: blur(6px);
-  color: var(--pitstop-white);
+  background: var(--frame);
+  border: 2px solid var(--ink);
+  box-shadow: inset 2px 2px 0 var(--frame-hi), inset -2px -2px 0 var(--frame-lo);
+  color: var(--ink);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
 }
-.hud-btn:hover {
-  border-color: var(--pitstop-blue);
-  background: rgb(31 90 152 / 0.35);
+.hbtn:active {
+  box-shadow: inset -2px -2px 0 var(--frame-hi), inset 2px 2px 0 var(--frame-lo);
 }
-.hud-btn svg {
-  width: 18px;
-  height: 18px;
+.hbtn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.hud-caption {
+.cap {
   position: absolute;
-  left: 24px;
-  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  max-width: min(340px, 34vw);
-  display: grid;
-  gap: 4px;
-  padding-left: 14px;
-  border-left: 2px solid var(--tone);
-  animation: capIn 0.7s var(--ease-out) 0.3s both;
-  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  left: 14px;
+  right: 170px;
+  bottom: 10px;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-family: var(--font-term);
+  font-size: 21px;
+  line-height: 1;
+  animation: capIn 0.4s steps(4) both;
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
 }
 .cap-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pitstop-muted);
+  color: #8d968f;
 }
 .cap-actor {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pitstop-white);
+  color: var(--cream);
+  padding: 2px 6px;
+  background: rgb(0 0 0 / 0.55);
+  border-left: 4px solid var(--cyan);
 }
 .cap-note {
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--pitstop-muted);
+  color: #b9b39f;
 }
-
 .skip {
   position: absolute;
-  right: 24px;
-  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  padding: 10px 16px;
-  border: 1px solid rgb(232 237 243 / 0.25);
-  background: rgb(10 14 20 / 0.5);
-  backdrop-filter: blur(6px);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  right: 14px;
+  bottom: 8px;
+  padding: 3px 12px;
+  background: var(--frame);
+  border: 2px solid var(--ink);
+  box-shadow: inset 2px 2px 0 var(--frame-hi), inset -2px -2px 0 var(--frame-lo);
+  color: var(--ink);
+  font-family: var(--font-term);
+  font-size: 22px;
   cursor: pointer;
-  transition: border-color 0.2s;
 }
-.skip:hover {
-  border-color: var(--pitstop-blue);
+.skip:active {
+  box-shadow: inset -2px -2px 0 var(--frame-hi), inset 2px 2px 0 var(--frame-lo);
 }
 
-@media (max-width: 900px) {
-  .hud-ui .hud-caption {
-    display: none;
-  }
-}
-@media (max-width: 640px) {
-  .hud-top {
-    grid-template-columns: 1fr auto;
-    padding-inline: 16px;
-  }
+@media (max-width: 760px) {
   .pillars {
+    gap: 10px;
+    font-size: 17px;
+  }
+  .pl small,
+  .cap-note,
+  .cap-label {
     display: none;
-  }
-  .hud-caption {
-    left: 16px;
-    max-width: calc(100vw - 150px);
-  }
-  .cap-note {
-    display: none;
-  }
-  .skip {
-    right: 16px;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@keyframes blink {
+  50% {
+    opacity: 0.2;
   }
 }
 @keyframes capIn {
   from {
     opacity: 0;
-    transform: translateX(-10px);
-  }
-}
-@keyframes blink {
-  50% {
-    opacity: 0.35;
+    transform: translateX(-8px);
   }
 }
 

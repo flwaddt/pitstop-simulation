@@ -1,36 +1,33 @@
-import PixelButton, { PixelPanel } from '../components/Button.jsx';
-import { Brand, Headline, Micro } from '../components/Brand.jsx';
-import { AvatarPixel, GpsIcon, TickIcon } from '../components/PixelArt.jsx';
+import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
+import PixelMap from '../components/PixelMap.jsx';
+import { Person, Pin } from '../components/Pixel.jsx';
 
-/** Fictional contact only. */
+/** UI 7 — Emergency Contact receives the alert + live location. No 115 here. */
 export default function EmergencyContact({ act }) {
   return (
-    <div className="scr">
-      <Brand tone="red" />
-      <Headline tone="red" size="md">Emergency contact</Headline>
-      <PixelPanel tone="blue" className="contact">
-        <div className="contact-avatar">
-          <AvatarPixel />
+    <RetroWindow
+      band={{ tone: 'hazard', text: 'EMERGENCY CONTACT' }}
+      deco={{ spinnerRight: true }}
+      footer={<RetroButton onClick={() => act('VIEW_LOCATION')} autoFocus>VIEW LOCATION</RetroButton>}
+    >
+      <div className="cards">
+        <div className="card info">
+          <div className="info-head">
+            <Person />
+            <span className="t-green">CONTACT NOTIFIED ✓</span>
+          </div>
+          <div className="info-body">
+            <span className="k">RIDER</span>
+            <span className="v-name">STEVE</span>
+            <span className="k">STATUS</span>
+            <span className="v-red">CRASH DETECTED</span>
+          </div>
         </div>
-        <p className="contact-name">Family contact</p>
-        <p className="contact-num">+84 *** *** ***</p>
-        <Micro className="center">Fictional contact for this simulation</Micro>
-      </PixelPanel>
-      <ul className="chips">
-        <li className="chip chip-green">
-          <GpsIcon className="chip-ico" />
-          <span>Location ready</span>
-          <TickIcon className="chip-ok" />
-        </li>
-        <li className="chip chip-blue">
-          <span className="chip-pulse" />
-          <span>Ready to notify</span>
-        </li>
-      </ul>
-      <div className="grow" />
-      <PixelButton tone="red" onClick={() => act('CALL_SMS')} autoFocus>
-        Call / SMS
-      </PixelButton>
-    </div>
+        <div className="card">
+          <PixelMap mode="pin" />
+          <span className="card-foot">LIVE LOCATION SHARED <Pin /></span>
+        </div>
+      </div>
+    </RetroWindow>
   );
 }

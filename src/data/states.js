@@ -1,262 +1,226 @@
 import { ASSETS, CONFIG } from './assets.js';
 
 /**
- * PITSTOP state machine.
+ * PITSTOP state machine — follows PITSTOP_MASTER_INTERACTIVE_FLOW_A-Z.
  *
- * Each state declares:
- *   type      'video' | 'ui' | 'route'
- *             video  — a cinematic clip, advances to `next` when it ends
- *             ui     — an interactive screen (see screens/index.js)
- *             route  — a pass-through state that only plays a cue and forwards
- *   asset     video file (video states). null ⇒ state is skipped.
- *   screen    screen component name (ui states)
- *   phone     true ⇒ rendered inside the smartphone frame
- *   next      default next state
- *   actions   { ACTION_NAME: 'TARGET_STATE' } — what a screen may trigger
- *   duration  seconds, for timed screens
- *   pillar    DETECT | VERIFY | RESPOND — lights the progress tracker
- *   tone      neutral | blue | green | red | mixed — drives glow colour
- *   cue       optional sound cue played on entry
- *   transition how a video enters: 'fade' | 'crossfade' | 'discover'
- *   actor / note  the short caption shown bottom-left. `actor` names which
- *             part of the system is doing the work (detector, phone, simulation).
+ *  UI_1 → SCENE_1 → SCENE_2 → LOADING → SCENE_3 → SCENE_4 ─CUT→ UI_3
+ *    UI_3 ├─ I'M OK ─────────────→ UI_4 → SCENE_1 (replay loop)
+ *         └─ NO RESPONSE / 0 → BEEP-BEEP → UI_5 → UI_6 → UI_7 → UI_8
+ *                                         → UI_9 → UI_10 → UI_11 → UI_1
+ *
+ * Fields
+ *   type        'video' | 'ui'
+ *   asset       video file (video states). null ⇒ skipped
+ *   screen      screen component (ui states, see screens/index.js)
+ *   next        default next state (video end, or auto-advance)
+ *   actions     { ACTION: 'TARGET' } a screen can trigger
+ *   auto        seconds before a ui state advances to `next` by itself
+ *   transition  how a video enters: 'fade' | 'crossfade' | 'cut'
+ *   backdrop    what the video layer does under a ui state: 'hidden' | 'freeze'
+ *   pillar      DETECT | VERIFY | RESPOND (progress tracker)
+ *   cue         sound cue on entry
+ *   actor/note  one-line caption: who in the system is acting
+ *   enabled     false ⇒ skipped
  */
 export const STATES = {
-  START: {
+  UI_1: {
     type: 'ui',
-    screen: 'StartScreen',
-    tone: 'neutral',
-    actions: { START: 'NORMAL_RIDING' },
+    screen: 'SystemReady',
+    actions: { START: 'SCENE_1' },
+    actor: 'PITSTOP',
+    note: 'System ready. Start the simulation.',
   },
 
-  // ─── Cinematic scenes ──────────────────────────────────────────────
-  NORMAL_RIDING: {
+  SCENE_1: {
     type: 'video',
-    asset: ASSETS.video.normalRiding,
-    next: 'CRASH',
+    asset: ASSETS.video.scene1,
+    next: 'SCENE_2',
     transition: 'fade',
-    tone: 'neutral',
-    label: 'Scene 01 · Normal riding',
+    label: 'Scene 1 · Normal riding',
     actor: 'Everyday commute',
-    note: 'PITSTOP sits on a dock on the back of the helmet.',
+    note: 'PITSTOP is mounted on the rider’s helmet.',
   },
-  CRASH: {
+  SCENE_2: {
     type: 'video',
-    asset: ASSETS.video.crash,
-    next: 'IMPACT_DETECTED',
-    transition: 'crossfade',
-    tone: 'neutral',
-    label: 'Scene 02 · Crash',
-    actor: 'Low-speed fall',
-    note: 'A believable everyday accident.',
-  },
-  IMPACT_DETECTED: {
-    type: 'video',
-    asset: ASSETS.video.impactDetected,
-    next: 'BLUETOOTH',
-    transition: 'discover',
-    pillar: 'DETECT',
-    tone: 'red',
-    label: 'Scene 03 · Impact detected',
-    actor: 'PITSTOP detector',
-    note: 'The helmet-mounted detector senses the impact.',
-  },
-
-  // ─── FUTURE cinematic slots (skipped while asset is null) ─────────
-  BLUETOOTH: {
-    type: 'video',
-    asset: ASSETS.video.bluetooth,
-    next: 'PHONE',
+    asset: ASSETS.video.scene2,
+    next: 'LOADING',
     transition: 'crossfade',
     pillar: 'DETECT',
-    tone: 'blue',
-    label: 'Scene 04 · PITSTOP → Bluetooth → Phone',
-    actor: 'PITSTOP → Bluetooth',
-    note: 'The detector hands the crash signal to the phone.',
+    label: 'Scene 2 · Crash',
+    actor: 'Low-speed collision',
+    note: 'Both riders fall. PITSTOP stays on the helmet.',
   },
-  PHONE: {
+  LOADING: CONFIG.loadingMode === 'video'
+    ? {
+        type: 'video',
+        asset: ASSETS.video.loading,
+        next: 'SCENE_3',
+        transition: 'cut',
+        pillar: 'DETECT',
+        cue: 'loading',
+        actor: 'PITSTOP',
+        note: 'Processing crash data…',
+      }
+    : {
+        type: 'ui',
+        screen: 'Loading',
+        backdrop: 'freeze',
+        next: 'SCENE_3',
+        auto: CONFIG.loadingSeconds,
+        actions: { CANCEL: 'UI_1' },
+        pillar: 'DETECT',
+        cue: 'loading',
+        actor: 'PITSTOP',
+        note: 'Processing crash data…',
+      },
+  SCENE_3: {
     type: 'video',
-    asset: ASSETS.video.phone,
-    next: 'PHONE_SIGNAL',
-    transition: 'crossfade',
+    asset: ASSETS.video.scene3,
+    next: 'UI_2',
+    transition: 'fade',
     pillar: 'DETECT',
-    tone: 'blue',
-    label: 'Scene 05 · Phone',
-    actor: "Rider's phone",
+    label: 'Scene 3 · PITSTOP → Bluetooth → Phone',
+    actor: 'PITSTOP → Bluetooth → Phone',
+    note: 'PITSTOP has no GPS or SIM. It sends the crash signal to the phone.',
+  },
+  // Not in the master state machine; enable with CONFIG.includeUI2.
+  UI_2: {
+    type: 'ui',
+    screen: 'CrashSignal',
+    enabled: CONFIG.includeUI2,
+    next: 'SCENE_4',
+    actions: { CONTINUE: 'SCENE_4' },
+    pillar: 'DETECT',
+    cue: 'activate',
+    actor: 'PITSTOP → Bluetooth → Phone',
     note: 'The phone receives the crash signal.',
   },
-
-  // ─── Phone UI ─────────────────────────────────────────────────────
-  // First phone screen: the hand-off from detector to phone
-  // (UI reference 1 — "Crash signal received").
-  PHONE_SIGNAL: {
-    type: 'ui',
-    screen: 'SignalReceived',
-    phone: true,
-    pillar: 'DETECT',
-    tone: 'blue',
-    cue: 'bluetooth',
-    actions: { CONTINUE: 'ARE_YOU_OK' },
-    actor: 'PITSTOP → Bluetooth → Phone',
-    note: 'The detector has no GPS. It passes the crash signal to the phone.',
+  SCENE_4: {
+    type: 'video',
+    asset: ASSETS.video.scene4,
+    next: 'UI_3',
+    transition: 'crossfade',
+    pillar: 'VERIFY',
+    label: 'Scene 4 · Phone',
+    actor: 'Rider’s phone',
+    note: 'The phone asks: Are you OK?',
   },
-  ARE_YOU_OK: {
+
+  // CUT from Scene 4 straight into the interactive takeover.
+  UI_3: {
     type: 'ui',
     screen: 'AreYouOk',
-    phone: true,
+    actions: { OK: 'UI_4', NO_RESPONSE: 'UI_5' },
     pillar: 'VERIFY',
-    tone: 'mixed',
-    cue: 'alert',
-    duration: CONFIG.areYouOkSeconds,
-    actions: { OK: 'STATUS_VERIFIED', NO_RESPONSE: 'NO_RESPONSE', TIMEOUT: 'NO_RESPONSE' },
-    actor: "Rider's phone",
-    note: 'You are the rider now. Answer, or let the timer run out.',
+    actor: 'You are the rider',
+    note: 'Answer before the timer reaches 0.',
   },
 
-  // ─── Safe branch ──────────────────────────────────────────────────
-  STATUS_VERIFIED: {
+  // ── Safe branch ──
+  UI_4: {
     type: 'ui',
     screen: 'StatusVerified',
-    phone: true,
+    actions: { CONTINUE: 'SCENE_1' },
     pillar: 'VERIFY',
     outcome: 'safe',
-    tone: 'green',
     cue: 'safe',
-    actions: { CONTINUE: 'SAFE_OUTCOME' },
-    actor: "Rider's phone",
-    note: 'The rider answered. Nothing is escalated.',
-  },
-  SAFE_OUTCOME: {
-    type: 'ui',
-    screen: 'SafeOutcome',
-    phone: true,
-    pillar: 'RESPOND',
-    outcome: 'safe',
-    tone: 'green',
-    cue: 'confirm',
-    actions: { RESTART: 'START' },
-    actor: 'System complete',
-    note: 'A false alarm costs the rider one tap.',
+    actor: 'Rider confirmed safe',
+    note: 'No emergency response. Back to riding.',
   },
 
-  // ─── Emergency branch ─────────────────────────────────────────────
-  NO_RESPONSE: {
-    type: 'route',
-    next: 'WAIT_VERIFY',
-    cue: 'warning',
-  },
-  WAIT_VERIFY: {
+  // ── Emergency branch ──
+  UI_5: {
     type: 'ui',
-    screen: 'WaitVerify',
-    phone: true,
-    pillar: 'VERIFY',
-    tone: 'blue',
-    duration: CONFIG.verifySeconds,
-    actions: { TIMEOUT: 'EMERGENCY_ALERT' },
-    actor: "Rider's phone",
-    note: 'A short wait before escalating filters out false alarms.',
-  },
-  EMERGENCY_ALERT: {
-    type: 'ui',
-    screen: 'EmergencyAlert',
-    phone: true,
+    screen: 'NoResponse',
+    next: 'UI_6',
+    auto: CONFIG.noResponseSeconds,
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'red',
-    cue: 'emergency',
-    actions: { CONTINUE: 'GPS_FROM_PHONE' },
-    actor: "Rider's phone",
-    note: 'No answer. The phone starts the emergency workflow.',
+    cue: 'alarm',
+    actor: 'Rider’s phone',
+    note: 'No answer. Emergency protocol starts.',
   },
-  GPS_FROM_PHONE: {
+  UI_6: {
     type: 'ui',
-    screen: 'GPSFromPhone',
-    phone: true,
+    screen: 'AlertSent',
+    next: 'UI_7',
+    auto: CONFIG.alertSentSeconds,
+    actions: { CONTACT: 'UI_7', MONITOR: 'UI_8' },
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'blue',
-    actions: { CONTINUE: 'EMERGENCY_CONTACT' },
-    actor: "Rider's phone · GPS",
-    note: 'Location comes from the phone. The detector has no GPS.',
+    cue: 'confirm',
+    actor: 'Phone → Contact + Monitor',
+    note: 'Both get the alert and live location at the same time.',
   },
-  EMERGENCY_CONTACT: {
+  UI_7: {
     type: 'ui',
     screen: 'EmergencyContact',
-    phone: true,
+    actions: { VIEW_LOCATION: 'UI_8' },
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'red',
-    actions: { CALL_SMS: 'CALL_SMS' },
-    actor: "Rider's phone",
-    note: 'Fictional contact for this simulation.',
+    cue: 'click',
+    actor: 'Emergency contact',
+    note: 'Receives the alert and live location.',
   },
-  CALL_SMS: {
+  UI_8: {
     type: 'ui',
-    screen: 'CallSMS',
-    phone: true,
+    screen: 'MonitorAlert',
+    actions: { CONTACT_115: 'UI_9' },
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'red',
-    cue: 'ring',
-    actions: { CONTINUE: 'RESPONSE_SIMULATION' },
-    actor: 'Simulation',
-    note: 'No real call or SMS is sent.',
+    cue: 'alarm',
+    actor: 'Monitor',
+    note: 'Sees rider, contact, crash status and location. The Monitor calls 115.',
   },
-  RESPONSE_SIMULATION: {
+  UI_9: {
     type: 'ui',
-    screen: 'ResponseSimulation',
-    phone: true,
+    screen: 'Contacting115',
+    next: 'UI_10',
+    auto: CONFIG.contacting115Seconds,
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'blue',
+    cue: 'dial',
+    actor: 'Monitor → 115',
+    note: 'PITSTOP never calls 115 directly.',
+  },
+  UI_10: {
+    type: 'ui',
+    screen: 'Response115',
+    next: 'UI_11',
+    auto: CONFIG.response115Seconds,
+    pillar: 'RESPOND',
     cue: 'confirm',
-    actions: { END: 'END' },
-    actor: 'Simulation',
-    note: 'The intended emergency-response workflow.',
+    actor: '115',
+    note: 'Incident received. Response unit dispatched.',
   },
-  END: {
+  UI_11: {
     type: 'ui',
-    screen: 'EndScreen',
+    screen: 'ResponseComplete',
+    actions: { REPLAY: 'UI_1' },
     pillar: 'RESPOND',
-    outcome: 'emergency',
-    tone: 'neutral',
-    actions: { RESTART: 'START' },
+    outcome: 'done',
+    cue: 'safe',
+    actor: 'Simulation complete',
+    note: 'Detect → Verify → Respond.',
   },
 };
 
-export const INITIAL_STATE = 'START';
+export const INITIAL_STATE = 'UI_1';
 export const PILLARS = ['DETECT', 'VERIFY', 'RESPOND'];
 
-/** A state is playable unless it is a route, or a video with no asset. */
 export function isSkippable(state) {
   if (!state) return false;
-  if (state.type === 'route') return true;
-  if (state.type === 'video' && !state.asset) return true;
-  return state.enabled === false;
+  if (state.enabled === false) return true;
+  return state.type === 'video' && !state.asset;
 }
 
-/**
- * Follow `next` through skippable states until a playable one is found.
- * Returns { id, passed } where `passed` lists the skipped states (so their
- * cues can still play).
- */
 export function resolveState(id) {
-  const passed = [];
   let guard = 0;
-  while (isSkippable(STATES[id]) && guard++ < 32) {
-    passed.push(id);
-    id = STATES[id].next;
-  }
-  return { id, passed };
+  while (isSkippable(STATES[id]) && guard++ < 32) id = STATES[id].next;
+  return id;
 }
 
-/** The video asset that will play after `id`, so it can be preloaded. */
+/** Video that will most likely play after `id`, so it can be preloaded. */
 export function upcomingVideo(id) {
   const s = STATES[id];
   if (!s) return null;
-  const nextId = s.next ?? s.actions?.START ?? null;
+  const nextId = s.next ?? (s.actions ? Object.values(s.actions)[0] : null);
   if (!nextId) return null;
-  const { id: resolved } = resolveState(nextId);
-  const n = STATES[resolved];
+  const n = STATES[resolveState(nextId)];
   return n?.type === 'video' ? n.asset : null;
 }
