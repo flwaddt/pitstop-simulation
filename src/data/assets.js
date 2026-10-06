@@ -56,12 +56,12 @@ export const CONFIG = {
    * like signals arriving. Seconds per screen (SPACE skips ahead).
    */
   autoSeconds: {
-    ui5: 3.5, // NO RESPONSE
-    ui6: 4, // ALERT SENT
-    ui7: 4.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
-    ui8: 4.5, // MONITOR ALERT      (auto-presses CONTACT 115)
-    ui9: 4, // CONTACTING 115
-    ui10: 5.5, // 115 RESPONSE       (vehicle drives to the rider)
+    ui5: 4.5, // NO RESPONSE
+    ui6: 5, // ALERT SENT
+    ui7: 5.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 5.5, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 5, // CONTACTING 115
+    ui10: 6.5, // 115 RESPONSE       (vehicle drives to the rider)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,
