@@ -14,7 +14,7 @@ import TouchPad from '../components/TouchPad.jsx';
  *   W A S D / arrow keys — move the scooter
  *   SPACE                — go to the crash scene
  * After CONFIG.rideEventSeconds a second rider comes the other way, drifting
- * into your lane; hitting him triggers the crash (other traffic is a near miss).
+ * into your lane; touching him — or any other vehicle — ends the ride and cuts to the crash.
  */
 const VW = 320;
 const VH = 180;
@@ -292,21 +292,14 @@ export default function Ride({ act }) {
           const ow = (o.type === 'car' ? 28 : 18) * P;
           const oh = (o.type === 'car' ? 14 : 9) * P;
           if (Math.abs(o.x - player.x) < (ow + player.w) / 2 - 3 && Math.abs(o.y - player.y) < (oh + player.h) / 2 - 2) {
-            // Only the second rider causes the crash (the story's collision).
-            // Ordinary traffic is a near miss: a warning click, no crash,
-            // so players can enjoy riding up to 100 km/h.
-            if (o.second) {
-              crashed = t;
-              playCue('impact');
-              break;
-            }
-            if (!o.missed) {
-              o.missed = true;
-              playCue('click');
-            }
+            // Like the original version: touching ANY vehicle ends the ride
+            // and cuts straight to the crash scene.
+            crashed = t;
+            playCue('impact');
+            break;
           }
         }
-      } else if (t - crashed > 0.6) {
+      } else if (t - crashed > 0.25) {
         finish('hit');
       }
 
@@ -327,7 +320,7 @@ export default function Ride({ act }) {
         }
       }
       if (crashed) {
-        const k = 1 - Math.min(1, (t - crashed) / 0.6);
+        const k = 1 - Math.min(1, (t - crashed) / 0.25);
         g.fillStyle = `rgba(255,255,255,${0.7 * k})`;
         g.fillRect(0, 0, VW, VH);
       }
