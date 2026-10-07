@@ -12,7 +12,6 @@ export default function StatusVerified({ act }) {
       <div className="col">
         <span className="tile pop"><Check /></span>
         <p className="t-green t-hero">RIDER CONFIRMED SAFE</p>
-        <p className="obox obox-green">EMERGENCY RESPONSE NOT REQUIRED</p>
       </div>
     </RetroWindow>
   );

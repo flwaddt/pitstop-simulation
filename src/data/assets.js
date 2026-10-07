@@ -62,6 +62,7 @@ export const CONFIG = {
     ui8: 5.5, // MONITOR ALERT      (auto-presses CONTACT 115)
     ui9: 5, // CONTACTING 115
     ui10: 6.5, // 115 RESPONSE       (vehicle drives to the rider)
+    hospital: 5.5, // FINDING NEAREST HOSPITAL (radar locks on, connects)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,

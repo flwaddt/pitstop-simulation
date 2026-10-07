@@ -5,18 +5,13 @@ import { Check } from '../components/Pixel.jsx';
 export default function ResponseComplete({ act }) {
   return (
     <RetroWindow
-      band={{ tone: 'green', text: 'RESPONSE COMPLETE' }}
+      band={{ tone: 'green', text: 'SIMULATION COMPLETE' }}
       deco={{ spinnerRight: true }}
       footer={<RetroButton onClick={() => act('REPLAY')}>REPLAY</RetroButton>}
     >
       <div className="col">
         <span className="tile tile-glow pop"><Check /></span>
-        <p className="t-cream t-hero lines">
-          RIDER LOCATED
-          <br />
-          ASSISTANCE PROVIDED
-        </p>
-        <p className="obox obox-green">PITSTOP SIMULATION COMPLETE</p>
+        <p className="t-cream t-hero">ASSISTANCE PROVIDED</p>
       </div>
     </RetroWindow>
   );

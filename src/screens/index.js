@@ -12,6 +12,7 @@ import MonitorAlert from './MonitorAlert.jsx';
 import Contacting115 from './Contacting115.jsx';
 import Response115 from './Response115.jsx';
 import ResponseComplete from './ResponseComplete.jsx';
+import FindingHospital from './FindingHospital.jsx';
 
 /** Screen registry — states.js refers to screens by these names. */
 export const SCREENS = {
@@ -29,4 +30,5 @@ export const SCREENS = {
   Contacting115,
   Response115,
   ResponseComplete,
+  FindingHospital,
 };

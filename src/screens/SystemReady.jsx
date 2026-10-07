@@ -6,8 +6,8 @@ import { playCue } from '../lib/audio.js';
 /** UI 1 — opening state. Does not mean 115 or an ambulance is on standby. */
 const ROWS = [
   { icon: <Helmet />, text: 'CRASH DETECTION ACTIVE' },
-  { icon: <OldPhone />, text: 'PHONE CONNECTION READY' },
-  { icon: <Monitor />, text: 'EMERGENCY MONITOR READY' },
+  { icon: <OldPhone />, text: 'PHONE CONNECTION' },
+  { icon: <Monitor />, text: 'EMERGENCY MONITOR' },
 ];
 
 /** `checked` = how many rows show their tick (UI 3 shows all, dimmed). */
@@ -60,7 +60,7 @@ export default function SystemReady({ act }) {
       deco={{ spinnerLeft: true, spinnerRight: true, cursor: <Cursor /> }}
       footer={
         <RetroButton data-primary className={ready ? 'is-waiting' : ''} onClick={() => act('START')}>
-          START SIMULATION
+          START
         </RetroButton>
       }
     >

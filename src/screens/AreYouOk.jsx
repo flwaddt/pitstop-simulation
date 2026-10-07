@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
 import CountdownRing from '../components/CountdownRing.jsx';
-import { Cursor, Doc, Floppy } from '../components/Pixel.jsx';
-import { StatusRows } from './SystemReady.jsx';
+import { Cursor } from '../components/Pixel.jsx';
 import { CONFIG } from '../data/assets.js';
 import { playCue, playTick } from '../lib/audio.js';
 import { isTouch } from '../lib/device.js';
@@ -99,7 +98,6 @@ export default function AreYouOk({ act }) {
         <div className={`modal ${zero ? 'is-zero' : ''}`} role="alertdialog" aria-labelledby="ayo-h">
           <div className="modal-head">CRASH DETECTED</div>
           <h2 className="modal-h" id="ayo-h">ARE YOU OK?</h2>
-          <p className="modal-sub">PLEASE CONFIRM YOUR STATUS</p>
           <CountdownRing value={left} total={total} zero={zero} />
           <div className="modal-btns">
             <RetroButton tone="green" className={sel === 'ok' ? 'is-sel' : ''} onMouseEnter={() => setSel('ok')} onClick={ok} disabled={zero}>
@@ -116,13 +114,7 @@ export default function AreYouOk({ act }) {
         </div>
       }
     >
-      <StatusRows dim />
-      <div className="ayo-deco" aria-hidden="true">
-        <span className="ayo-floppy f1"><Floppy /></span>
-        <span className="ayo-floppy f2"><Floppy /></span>
-        <span className="ayo-doc d1"><Doc /></span>
-        <span className="ayo-doc d2"><Doc /></span>
-      </div>
+      <div className="ayo-empty" />
     </RetroWindow>
   );
 }

@@ -1,33 +1,32 @@
+import { Pin } from '../components/Pixel.jsx';
 import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
 import PixelMap from '../components/PixelMap.jsx';
 
-/** UI 8 — the Monitor sees everything and is the party that calls 115. */
+/** UI 8 — the Monitor gets contact info + live location and calls the emergency service. */
 export default function MonitorAlert({ act, state }) {
   return (
     <RetroWindow
-      band={{ tone: 'red', text: 'MONITOR ALERT' }}
+      band={{ tone: 'yellow', text: 'MONITOR ALERT' }}
       deco={{ spinnerRight: true }}
       footer={
-        <RetroButton outline="red" className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('CONTACT_115')}>
-          CONTACT 115
+        <RetroButton tone="danger" className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('CONTACT_115')}>
+          EMERGENCY SERVICE
         </RetroButton>
       }
     >
       <div className="cards">
-        <div className="card info info-dense">
-          <div className="info-body">
-            <span className="k">RIDER</span>
-            <span className="v-name">STEVE</span>
-            <span className="k">STATUS</span>
-            <span className="v-red">CRASH DETECTED</span>
-            <span className="k">EMERGENCY CONTACT</span>
+        <div className="card info info-mon-card">
+          <span className="card-top" />
+          <div className="info-body info-mon">
+            <span className="k-lg">EMERGENCY CONTACT</span>
             <span className="v-cyan">INFORMATION AVAILABLE</span>
             <span className="k">LIVE LOCATION</span>
             <span className="v-green">AVAILABLE ✓</span>
           </div>
         </div>
-        <div className="card card-map-only">
+        <div className="card">
           <PixelMap mode="monitor" />
+          <span className="card-foot">LIVE LOCATION SHARED <Pin /></span>
         </div>
       </div>
     </RetroWindow>

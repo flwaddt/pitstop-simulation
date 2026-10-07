@@ -19,15 +19,15 @@ UI 3 (real 10 → 0 countdown)
  ├─ I'M OK ──────────────→ UI 4 STATUS VERIFIED → back to SCENE 1
  └─ NO RESPONSE / 0 → silence · low hit · BEEP—BEEP → UI 5 NO RESPONSE
       → UI 6 ALERT SENT (Contact + Monitor at once) → UI 7 EMERGENCY CONTACT
-      → UI 8 MONITOR ALERT → UI 9 CONTACTING 115 (Monitor → 115)
-      → UI 10 115 RESPONSE → UI 11 RESPONSE COMPLETE → REPLAY
+      → UI 8 MONITOR ALERT → UI 9 CONTACTING EMERGENCY SERVICE (Monitor → service)
+      → UI 10 EMERGENCY SERVICE RESPONSE → FINDING NEAREST HOSPITAL → UI 11 SIMULATION COMPLETE → REPLAY
 ```
 
 After NO RESPONSE every screen moves on by itself (5–8 s each, `CONFIG.autoSeconds`),
 like signals arriving; buttons on those screens press themselves.
 
 PITSTOP never calls 115 and has no GPS/SIM: the phone sends the alert and live location,
-and the Monitor calls 115.
+and the Monitor contacts the emergency service.
 
 ## Run / build
 

@@ -277,9 +277,9 @@ export const Vehicle = () => (
       '.......kkkkkk...........',
       '.......kRkBk............',
       'kkkkkkkkkkkkkkkkkk......',
-      'kWWWWWWWWWWWWWWWWkkkkk..',
-      'kWWWWWWWWWWWkGGGkWWWWkk.',
-      'kWWWWWWWWWWWkGGGkWWGGGWk',
+      'kWWWRWWWWWWWWWWWWkkkkk..',
+      'kWWRRRWWWWWWkGGGkWWWWkk.',
+      'kWWWRWWWWWWWkGGGkWWGGGWk',
       'kRRRRRRRRRRRRRRRRRRRRRRk',
       'kWWWWWWWWWWWWWWWWWWWWWWk',
       'kwwwwwwwwwwwwwwwwwwwwwYk',
@@ -304,6 +304,27 @@ export const Pin = () => (
       '..kCCck..',
       '...kck...',
       '....k....',
+    ]}
+  />
+);
+
+/* Hospital (radar screen) */
+export const Hospital = () => (
+  <Grid
+    title="Hospital"
+    pal={{ k: K, W: '#f2f2f2', R: '#e3262a', B: '#6fa8c8', D: '#7a8a96' }}
+    rows={[
+      '....kkkkk....',
+      '....kWRWk....',
+      '....kRRRk....',
+      '....kWRWk....',
+      'kkkkkkkkkkkkk',
+      'kWWWWWWWWWWWk',
+      'kWBBWBBWBBWWk',
+      'kWWWWWWWWWWWk',
+      'kWBBWWDDWBBWk',
+      'kWWWWWDDWWWWk',
+      'kkkkkkkkkkkkk',
     ]}
   />
 );

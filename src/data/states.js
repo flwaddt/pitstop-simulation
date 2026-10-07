@@ -8,7 +8,7 @@ import { ASSETS, CONFIG } from './assets.js';
  *       → SCENE_3 → SCENE_4 ─CUT→ UI_3
  *    UI_3 ├─ I'M OK ─────────────→ UI_4 → SCENE_1 (back to riding)
  *         └─ NO RESPONSE / 0 → BEEP-BEEP → UI_5 → UI_6 → UI_7 → UI_8
- *              → UI_9 → UI_10 → UI_11    (all automatic, like signals arriving)
+ *              → UI_9 → UI_10 → HOSPITAL → UI_11    (all automatic, like signals arriving)
  *
  * SPACE moves on: skips a video, advances a timed screen, or presses the
  * screen's `primary` button. Screens with keys:'self' handle keys themselves.
@@ -112,6 +112,7 @@ export const STATES = {
     cue: 'activate',
   },
   SCENE_4: {
+    speed: 1, // short clip: play at normal speed so the phone screen can be read
     type: 'video',
     asset: ASSETS.video.scene4,
     next: 'UI_3',
@@ -170,7 +171,9 @@ export const STATES = {
     cue: 'alarm',
   },
   UI_9: { type: 'ui', screen: 'Contacting115', next: 'UI_10', auto: T.ui9, pillar: 'RESPOND', cue: 'dial' },
-  UI_10: { type: 'ui', screen: 'Response115', next: 'UI_11', auto: T.ui10, pillar: 'RESPOND', cue: 'confirm' },
+  UI_10: { type: 'ui', screen: 'Response115', next: 'HOSPITAL', auto: T.ui10, pillar: 'RESPOND', cue: 'confirm' },
+  // Radar search for the nearest hospital, then the closing screen.
+  HOSPITAL: { type: 'ui', screen: 'FindingHospital', next: 'UI_11', auto: T.hospital, pillar: 'RESPOND', cue: 'dial' },
   UI_11: {
     type: 'ui',
     screen: 'ResponseComplete',

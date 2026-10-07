@@ -7,8 +7,8 @@ export default function EmergencyContact({ act, state }) {
   return (
     <RetroWindow
       band={{ tone: 'hazard', text: 'EMERGENCY CONTACT' }}
+      className="no-foot"
       deco={{ spinnerRight: true }}
-      footer={<RetroButton className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('VIEW_LOCATION')}>VIEW LOCATION</RetroButton>}
     >
       <div className="cards">
         <div className="card info">

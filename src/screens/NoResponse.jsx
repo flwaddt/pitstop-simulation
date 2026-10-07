@@ -10,7 +10,6 @@ export default function NoResponse() {
           <Warning variant="red" />
           {Array.from({ length: 10 }, (_, i) => <i key={i} className="spark" style={{ '--a': `${i * 36}deg`, '--d': `${(i % 3) * 0.15}s` }} />)}
         </span>
-        <p className="t-cream t-hero">RIDER DID NOT CONFIRM STATUS</p>
         <p className="obox obox-red">EMERGENCY PROTOCOL ACTIVATED</p>
       </div>
     </RetroWindow>
