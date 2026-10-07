@@ -14,14 +14,16 @@ import TouchPad from '../components/TouchPad.jsx';
  *   W A S D / arrow keys — move the scooter
  *   SPACE                — go to the crash scene
  * After CONFIG.rideEventSeconds a second rider comes the other way, drifting
- * into your lane; touching any vehicle also triggers the crash.
+ * into your lane; hitting him triggers the crash (other traffic is a near miss).
  */
 const VW = 320;
 const VH = 180;
 const ROAD_T = 42; // road top
 const ROAD_B = 138; // road bottom
 const MID = 90; // centre line
-const SCROLL = 52; // px/s the world moves past
+const SCROLL = 52; // px/s the world moves past at cruise speed
+const CRUISE_KMH = 30;
+const MAX_KMH = 100;
 
 /* ── seeded random so the street looks the same every time ── */
 function rng(seed) {
@@ -226,10 +228,13 @@ export default function Ride({ act }) {
         if (keys.has('d')) player.y += sp * 0.8 * dt;
         player.x = Math.max(24, Math.min(VW - 24, player.x));
         player.y = Math.max(ROAD_T + 12, Math.min(ROAD_B - 12, player.y));
-        const target = 30 + (keys.has('l') ? 12 : 0) - (keys.has('r') ? 10 : 0);
-        shownSpeed += (target - shownSpeed) * Math.min(1, dt * 3);
+        // ← / A = throttle (you ride right → left), → / D = brake.
+        // Hold throttle to climb to MAX_KMH; let go and it eases back to cruise.
+        if (keys.has('l')) shownSpeed = Math.min(MAX_KMH, shownSpeed + 38 * dt);
+        else if (keys.has('r')) shownSpeed = Math.max(10, shownSpeed - 45 * dt);
+        else shownSpeed += (CRUISE_KMH - shownSpeed) * Math.min(1, dt * 0.6);
 
-        const scroll = SCROLL + (keys.has('l') ? 18 : 0) - (keys.has('r') ? 16 : 0);
+        const scroll = SCROLL * (shownSpeed / CRUISE_KMH);
         offset = (offset + scroll * dt) % strip.width;
 
         spawnIn -= dt;
@@ -266,9 +271,18 @@ export default function Ride({ act }) {
           const ow = (o.type === 'car' ? 28 : 18) * P;
           const oh = (o.type === 'car' ? 14 : 9) * P;
           if (Math.abs(o.x - player.x) < (ow + player.w) / 2 - 3 && Math.abs(o.y - player.y) < (oh + player.h) / 2 - 2) {
-            crashed = t;
-            playCue('impact');
-            break;
+            // Only the second rider causes the crash (the story's collision).
+            // Ordinary traffic is a near miss: a warning click, no crash,
+            // so players can enjoy riding up to 100 km/h.
+            if (o.second) {
+              crashed = t;
+              playCue('impact');
+              break;
+            }
+            if (!o.missed) {
+              o.missed = true;
+              playCue('click');
+            }
           }
         }
       } else if (t - crashed > 0.6) {

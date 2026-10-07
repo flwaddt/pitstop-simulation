@@ -10,6 +10,24 @@ const W = 64;
 const H = 44;
 const PIN = { x: 33, y: 17 };
 const ROUTE = 'M50 46 V38 H38 V30 H33 V22';
+/** Ambulance path (same streets as ROUTE, stopping just short of the pin). */
+const DRIVE = [[50, 48], [50, 38], [38, 38], [38, 30], [33, 30], [33, 27]];
+/** 24×12 pixel ambulance, facing right. */
+const AMB_ROWS = [
+  '.......kkkkkk...........',
+  '.......kRkBk............',
+  'kkkkkkkkkkkkkkkkkk......',
+  'kWWWRWWWWWWWWWWWWkkkkk..',
+  'kWWRRRWWWWWWkGGGkWWWWkk.',
+  'kWWWRWWWWWWWkGGGkWWGGGWk',
+  'kRRRRRRRRRRRRRRRRRRRRRRk',
+  'kWWWWWWWWWWWWWWWWWWWWWWk',
+  'kwwwwwwwwwwwwwwwwwwwwwYk',
+  'kkkkTTTkkkkkkkkkkTTTkkkk',
+  '...TTtTT.........TTtTT..',
+  '....TTT...........TTT...',
+];
+const AMB_PAL = { k: '#111111', W: '#f4f4f4', w: '#d6d6d6', R: '#e3262a', B: '#3d6fb8', G: '#9fb8c8', T: '#2a2a2a', t: '#7a7a7a', Y: '#ffd51e' };
 const PIN_ROWS = ['..kkkkk..', '.kCHCCCk.', 'kCHCkCCCk', 'kCCkkkCCk', 'kCCCkCCck', '.kCCCCck.', '..kCCck..', '...kck...', '....k....'];
 const PIN_PAL = { k: '#111111', C: '#25b3c8', c: '#1a8597', H: '#7fe3f0' };
 
@@ -32,13 +50,38 @@ const BLOCKS = [
 ];
 
 function PixelMap({ mode = 'pin', travel = 6 }) {
-  // SMIL clocks start at page load, so start the drive when the map mounts.
-  const motion = useRef(null);
+  // Drive the ambulance along the route with requestAnimationFrame (works the
+  // same in every browser, unlike SMIL). It stops just below the rider's pin.
+  const unit = useRef(null);
   useEffect(() => {
-    try {
-      motion.current?.beginElement();
-    } catch {}
-  }, []);
+    if (mode !== 'route' || !unit.current) return;
+    const segs = [];
+    let total = 0;
+    for (let i = 1; i < DRIVE.length; i++) {
+      const [x0, y0] = DRIVE[i - 1];
+      const [x1, y1] = DRIVE[i];
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      segs.push({ x0, y0, x1, y1, len, from: total });
+      total += len;
+    }
+    const start = performance.now();
+    const dur = travel * 1000;
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const e = 1 - Math.pow(1 - t, 2); // ease out: slows as it arrives
+      const d = e * total;
+      const s = segs.find((g) => d <= g.from + g.len) || segs[segs.length - 1];
+      const k = s.len ? (d - s.from) / s.len : 1;
+      const x = s.x0 + (s.x1 - s.x0) * k;
+      const y = s.y0 + (s.y1 - s.y0) * k;
+      const flip = s.x1 < s.x0 ? -1 : 1; // face the way it drives
+      unit.current?.setAttribute('transform', `translate(${x} ${y}) scale(${flip} 1)`);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [mode, travel]);
   return (
     <div className={`pmap pmap-${mode}`}>
       <svg viewBox={`0 0 ${W} ${H}`} shapeRendering="crispEdges" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Fictional map with the rider's live location">
@@ -69,13 +112,6 @@ function PixelMap({ mode = 'pin', travel = 6 }) {
         {mode === 'route' && (
           <g>
             <path d={ROUTE} fill="none" stroke="#e3262a" strokeWidth="1.2" strokeDasharray="2 1.2" className="pmap-route" />
-            <g className="pmap-unit">
-              <rect x="-2" y="-1.4" width="4" height="2.8" fill="#111" />
-              <rect x="-1.6" y="-1" width="3.2" height="2" fill="#f4f4f4" />
-              <rect x="-1.6" y="-0.25" width="3.2" height="0.5" fill="#e3262a" />
-              <rect x="-0.4" y="-1.6" width="0.8" height="0.6" className="pmap-beacon" />
-              <animateMotion ref={motion} begin="indefinite" dur={`${travel}s`} fill="freeze" rotate="auto" path={ROUTE} />
-            </g>
           </g>
         )}
 
@@ -86,6 +122,18 @@ function PixelMap({ mode = 'pin', travel = 6 }) {
             [...row].map((ch, x) => (PIN_PAL[ch] ? <rect key={`${x}.${y}`} x={x} y={y} width="1.03" height="1.03" fill={PIN_PAL[ch]} /> : null)),
           )}
         </g></g>
+
+        {/* ambulance drawn last so it is never hidden under the pin */}
+        {mode === 'route' && (
+          <g ref={unit} className="pmap-unit" transform={`translate(${DRIVE[0][0]} ${DRIVE[0][1]})`}>
+            <g transform="translate(-4.8 -2.4) scale(0.4)">
+              {AMB_ROWS.flatMap((row, y) =>
+                [...row].map((ch, x) => (AMB_PAL[ch] ? <rect key={`a${x}.${y}`} x={x} y={y} width="1.03" height="1.03" fill={AMB_PAL[ch]} /> : null)),
+              )}
+              <rect x="8" y="1" width="1" height="1" className="pmap-beacon" />
+            </g>
+          </g>
+        )}
       </svg>
     </div>
   );

@@ -50,19 +50,19 @@ export const CONFIG = {
   /** Playable riding segment between Scene 1 and the crash. */
   includeRide: true,
   /** RIDE: seconds before the second rider comes at you (Space works any time). */
-  rideEventSeconds: 4,
+  rideEventSeconds: 6,
   /**
    * Emergency branch: after NO RESPONSE every screen moves on by itself,
    * like signals arriving. Seconds per screen (SPACE skips ahead).
    */
   autoSeconds: {
-    ui5: 4.5, // NO RESPONSE
-    ui6: 5, // ALERT SENT
-    ui7: 5.5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
-    ui8: 5.5, // MONITOR ALERT      (auto-presses CONTACT 115)
-    ui9: 5, // CONTACTING 115
-    ui10: 6.5, // 115 RESPONSE       (vehicle drives to the rider)
-    hospital: 5.5, // FINDING NEAREST HOSPITAL (radar locks on, connects)
+    ui5: 4, // NO RESPONSE
+    ui6: 4.5, // ALERT SENT
+    ui7: 5, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
+    ui8: 5, // MONITOR ALERT      (auto-presses CONTACT 115)
+    ui9: 4.5, // CONTACTING 115
+    ui10: 6, // 115 RESPONSE       (vehicle drives to the rider)
+    hospital: 5, // FINDING NEAREST HOSPITAL (radar locks on, connects)
   },
   /** UI 2 is not in the master state machine; set true to show it after Scene 3. */
   includeUI2: false,
