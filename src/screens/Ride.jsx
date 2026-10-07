@@ -244,24 +244,45 @@ export default function Ride({ act }) {
         }
 
         // the second rider: comes the other way and drifts into your lane
+        // The player can try to dodge, but most of the time it can't be avoided:
+        // with chance CONFIG.rideHitChance he locks on (faster sideways than
+        // you, committing only at the last moment); otherwise he swerves away.
         if (t >= eventAt) {
-          traffic.push({ x: -36, y: player.y, v: 48, dir: 1, type: 'moto', shirt: '#3d6fb8', helmet: '#d93a3a', second: true });
+          const aggressive = Math.random() < (CONFIG.rideHitChance ?? 0.9);
+          traffic.push({ x: -36, y: player.y, v: 26, dir: 1, type: 'moto', shirt: '#3d6fb8', helmet: '#d93a3a', second: true, aggressive });
           eventAt = Infinity;
-          setWarn(true);
+          setWarn('ahead');
           playCue('alarm');
         }
 
         for (const o of traffic) {
-          o.x += (o.v + scroll) * dt;
-          if (o.second) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), 26 * dt);
+          if (!o.second) {
+            o.x += (o.v + scroll) * dt;
+            continue;
+          }
+          // slower approach so the player sees it coming
+          o.x += (o.v + scroll * 0.55) * dt;
+          const dx = player.x - o.x;
+          if (o.aggressive) {
+            // homes in faster than you can move sideways; commits when very close
+            if (dx > 20) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), 62 * dt);
+          } else if (dx > 70) {
+            o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), 15 * dt);
+          } else {
+            // loses his nerve and swerves away
+            // swerve toward whichever side of the road has more room
+            const away = player.y - ROAD_T > ROAD_B - player.y ? -1 : 1;
+            o.y = Math.max(ROAD_T + 10, Math.min(ROAD_B - 10, o.y + away * 55 * dt));
+          }
         }
         for (let i = traffic.length - 1; i >= 0; i--) {
           const o = traffic[i];
           if (o.x > VW + 70) {
             if (o.second) {
-              // missed you — he comes back around
+              // dodged! he comes back around for another try
               eventAt = t + 2.5;
-              setWarn(false);
+              setWarn('miss');
+              playCue('safe');
             }
             traffic.splice(i, 1);
           }
@@ -334,7 +355,8 @@ export default function Ride({ act }) {
         <div className="ride-hud ride-tr">
           <i className="ride-dot" /> PITSTOP ACTIVE
         </div>
-        {warn && <div className="ride-warn">! RIDER AHEAD !</div>}
+        {warn === 'ahead' && <div className="ride-warn">! RIDER AHEAD — DODGE !</div>}
+        {warn === 'miss' && <div className="ride-warn ride-miss">NEAR MISS! — HE IS COMING BACK</div>}
         {isTouch ? <TouchPad nextLabel="CONTINUE" /> : <div className="ride-keys" aria-hidden="true">
           <span className="kgrp">
             <kbd>W</kbd>
