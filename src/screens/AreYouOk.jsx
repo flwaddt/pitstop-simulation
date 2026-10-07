@@ -91,7 +91,7 @@ export default function AreYouOk({ act }) {
 
   return (
     <RetroWindow
-      className={zero ? 'win-zero' : ''}
+      className={`win-grey-x ${zero ? 'win-zero' : ''}`}
       band={{ tone: 'green', text: 'STATUS: ACTIVE' }}
       deco={{ cursor: <Cursor /> }}
       overlay={

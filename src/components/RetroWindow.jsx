@@ -1,5 +1,4 @@
 import { useContext } from 'react';
-import { Folder, Spinner, Warning } from './Pixel.jsx';
 import { AutoCtx } from '../lib/autoCtx.js';
 
 /**
@@ -11,14 +10,14 @@ import { AutoCtx } from '../lib/autoCtx.js';
  * controls: show the _ □ X window buttons (all screens except UI 1)
  * footer:   node rendered in the bottom tab (usually a RetroButton)
  * overlay:  node rendered above the workspace (UI 3 modal)
- * deco:     { spinnerLeft, spinnerRight, cursor }
+ * deco:     ignored (kept so screens can still pass it)
  */
 export default function RetroWindow({ band, controls = true, footer, overlay, deco = {}, children, className = '' }) {
   const auto = useContext(AutoCtx);
   return (
     <div className={`win ${className} ${auto ? 'win-auto' : ''}`} style={auto ? { '--auto': `${auto}s` } : undefined}>
       <span className="screw s-tl" />
-      <span className="screw s-tr" />
+      {!controls && <span className="screw s-tr" />}
       <span className="screw s-bl" />
       <span className="screw s-br" />
 
@@ -40,20 +39,9 @@ export default function RetroWindow({ band, controls = true, footer, overlay, de
           </div>
         )}
         <div className="ws-body">{children}</div>
-        {auto > 0 && (
-          <div className="sigbar" aria-hidden="true">
-            <span>RECEIVING SIGNAL</span>
-            <i />
-          </div>
-        )}
       </div>
 
-      <div className="deco deco-folder-1"><Folder /></div>
-      <div className="deco deco-folder-2"><Folder light /></div>
-      <div className="deco deco-warn"><Warning /></div>
-      {deco.spinnerLeft && <Spinner className="deco deco-spin-l" />}
-      {deco.spinnerRight && <Spinner className="deco deco-spin-r" />}
-      {deco.cursor && <div className="deco deco-cursor">{deco.cursor}</div>}
+      {/* No side decorations: the v2 designs show the window alone. */}
 
       {footer && <div className="win-foot">{footer}</div>}
       {overlay}

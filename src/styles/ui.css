@@ -2036,3 +2036,8 @@ body {
 .info-mon .v-green {
   font-size: 3.6cqw;
 }
+/* UI 3: plain grey close button, as in its design */
+.win-grey-x .wc-x {
+  background: #e2e4e6;
+  box-shadow: inset 0.35cqw 0.35cqw 0 #fff, inset -0.35cqw -0.35cqw 0 #8b8f93;
+}
