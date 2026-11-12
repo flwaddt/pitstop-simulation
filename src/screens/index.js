@@ -9,6 +9,7 @@ import NoResponse from './NoResponse.jsx';
 import AlertSent from './AlertSent.jsx';
 import EmergencyContact from './EmergencyContact.jsx';
 import MonitorAlert from './MonitorAlert.jsx';
+import CallRider from './CallRider.jsx';
 import Contacting115 from './Contacting115.jsx';
 import Response115 from './Response115.jsx';
 import ResponseComplete from './ResponseComplete.jsx';
@@ -27,6 +28,7 @@ export const SCREENS = {
   AlertSent,
   EmergencyContact,
   MonitorAlert,
+  CallRider,
   Contacting115,
   Response115,
   ResponseComplete,

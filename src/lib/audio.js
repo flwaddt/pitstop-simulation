@@ -29,6 +29,9 @@ const SYNTH = {
   point: [[988, 0.05, 'square', 0.035], [0, 0.02], [1319, 0.08, 'square', 0.035]],
   // level up
   level: [[523, 0.07, 'square', 0.045], [659, 0.07, 'square', 0.045], [784, 0.07, 'square', 0.045], [1046, 0.16, 'square', 0.05]],
+  // phone ringing (call back to the rider)
+  ring: [[440, 0.3, 'sine', 0.06], [0, 0.08], [480, 0.3, 'sine', 0.06]],
+  noAnswer: [[300, 0.14, 'square', 0.05], [0, 0.06], [220, 0.28, 'square', 0.05]],
   impact: [[90, 0.4, 'sine', 0.4, 40], [0, 0.02], [180, 0.12, 'sawtooth', 0.06, 60]],
   // At 0: ~0.2 s silence → deep low hit → BEEP—BEEP
   zeroHit: [

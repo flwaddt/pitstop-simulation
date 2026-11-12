@@ -58,6 +58,7 @@ export const CONFIG = {
     ui6: 3.5, // ALERT SENT
     ui7: 4, // EMERGENCY CONTACT  (auto-presses VIEW LOCATION)
     ui8: 4, // MONITOR ALERT      (auto-presses CONTACT 115)
+    callRider: 4.5, // CALLING RIDER... (rings, no answer)
     ui9: 3.5, // CONTACTING 115
     ui10: 5, // 115 RESPONSE       (vehicle drives to the rider)
     hospital: 4, // FINDING NEAREST HOSPITAL (radar locks on, connects)

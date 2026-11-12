@@ -8,7 +8,7 @@ import { ASSETS, CONFIG } from './assets.js';
  *       → SCENE_3 → SCENE_4 ─CUT→ UI_3
  *    UI_3 ├─ I'M OK ─────────────→ UI_4 → SCENE_1 (back to riding)
  *         └─ NO RESPONSE / 0 → BEEP-BEEP → UI_5 → UI_6 → UI_7 → UI_8
- *              → UI_9 → UI_10 → HOSPITAL → UI_11    (all automatic, like signals arriving)
+ *              → CALL_RIDER → UI_9 → UI_10 → HOSPITAL → UI_11    (all automatic, like signals arriving)
  *
  * SPACE moves on: skips a video, advances a timed screen, or presses the
  * screen's `primary` button. Screens with keys:'self' handle keys themselves.
@@ -165,11 +165,20 @@ export const STATES = {
   UI_8: {
     type: 'ui',
     screen: 'MonitorAlert',
-    next: 'UI_9',
+    next: 'CALL_RIDER',
     auto: T.ui8,
-    actions: { CONTACT_115: 'UI_9' },
+    actions: { CALL_RIDER: 'CALL_RIDER' },
     pillar: 'RESPOND',
     cue: 'alarm',
+  },
+  // The Monitor calls the rider back first — the phone rings, no answer.
+  CALL_RIDER: {
+    type: 'ui',
+    screen: 'CallRider',
+    next: 'UI_9',
+    auto: T.callRider,
+    actions: { CONTACT_115: 'UI_9' },
+    pillar: 'RESPOND',
   },
   UI_9: { type: 'ui', screen: 'Contacting115', next: 'UI_10', auto: T.ui9, pillar: 'RESPOND', cue: 'dial' },
   UI_10: { type: 'ui', screen: 'Response115', next: 'HOSPITAL', auto: T.ui10, pillar: 'RESPOND', cue: 'confirm' },

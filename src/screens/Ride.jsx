@@ -14,9 +14,9 @@ import { getBest, recordScore, pad5 } from '../lib/score.js';
  * Endless runner in the spirit of the Chrome Dino game, in 3 levels:
  *   LV 1 EASY       — slow, sparse single vehicles and obstacles
  *   LV 2 MEDIUM     — faster, denser, "walls" with one gap, a reckless rider
- *   LV 3 SUPER HARD — very fast; walls close the WHOLE road: you can't get through
- * The score counts up with distance; reaching LEVELS[i].until moves to the
- * next level. Touching ANY vehicle or obstacle is GAME OVER → the crash scene.
+ *   LV 3 HARD       — very fast; walls close the WHOLE road: you can't get through
+ * The ride opens on a level select (◀ ▶ to choose, SPACE/ENTER to go). The
+ * score counts up with distance; clearing LEVELS[i].len points moves up a level. Touching ANY vehicle or obstacle is GAME OVER → the crash scene.
  *
  *   W S / ▲ ▼  — dodge up / down      A / ◀ — throttle (+points)   D / ▶ — brake
  *   SPACE      — skip to the crash scene
@@ -31,15 +31,16 @@ const CRUISE_KMH = 30; // SCROLL is calibrated at this speed
 /** Rows (y centres) vehicles and obstacles use: two per lane. */
 const ROWS = [56, 76, 104, 124];
 /**
- * The three levels. until = score that ends the level; kmh = [start, end]
+ * The three levels — the player picks where to start; the ride then keeps
+ * escalating (EASY → MEDIUM → HARD). len = points to clear the level; kmh = [start, end]
  * speed across the level; spawn = seconds between spawns [min, max];
  * wall = chance a spawn is a wall across the road; gaps = free rows in a wall
  * (0 = no way through); rider = seconds until the reckless rider (null = none).
  */
 const LEVELS = [
-  { name: 'EASY', until: 150, kmh: [35, 55], spawn: [1.5, 2.4], wall: 0, gaps: 2, rider: null },
-  { name: 'MEDIUM', until: 380, kmh: [65, 95], spawn: [0.8, 1.3], wall: 0.3, gaps: 1, rider: 4 },
-  { name: 'SUPER HARD', until: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5 },
+  { name: 'EASY', tag: 'CHILL RIDE', len: 150, kmh: [35, 55], spawn: [1.5, 2.4], wall: 0, gaps: 2, rider: null },
+  { name: 'MEDIUM', tag: 'RUSH HOUR', len: 230, kmh: [65, 95], spawn: [0.8, 1.3], wall: 0.3, gaps: 1, rider: 4 },
+  { name: 'HARD', tag: 'IMPOSSIBLE?', len: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5 },
 ];
 
 /* ── seeded random so the street looks the same every time ── */
@@ -202,6 +203,8 @@ export default function Ride({ act }) {
   const [warn, setWarn] = useState(false);
   const [banner, setBanner] = useState(0); // level number being announced (1-based), 0 = none
   const [over, setOver] = useState(null);
+  const [select, setSelect] = useState(0); // highlighted level on the select screen; null once riding
+  const beginRef = useRef(null);
   const doneRef = useRef(false);
   const best = useRef(getBest());
 
@@ -219,7 +222,8 @@ export default function Ride({ act }) {
     let offset = 0;
     let t = 0;
     let lv = 0;
-    let lvStart = 0; // t when the current level began
+    let started = false;
+    let sel = 0;
     let lvScore = 0; // score when the current level began
     let spawnIn = 1.2;
     let riderAt = Infinity;
@@ -241,17 +245,27 @@ export default function Ride({ act }) {
       setBanner(n);
       setTimeout(() => setBanner((b) => (b === n ? 0 : b)), 1800);
     };
-    announce(1);
-
     const startLevel = (n) => {
       lv = n;
-      lvStart = t;
       lvScore = score;
       const L = LEVELS[n];
       riderAt = L.rider == null ? Infinity : t + L.rider;
       spawnIn = n === 2 ? 0.9 : 1.1; // a short breather while the banner shows
       announce(n + 1);
       playCue('level');
+    };
+
+    const begin = (n) => {
+      if (started) return;
+      started = true;
+      keys.clear();
+      kmh = LEVELS[n].kmh[0];
+      setSelect(null);
+      startLevel(n);
+    };
+    beginRef.current = (n) => {
+      unlockAudio();
+      begin(n);
     };
 
     // Is the spawn point free around row y?
@@ -294,6 +308,22 @@ export default function Ride({ act }) {
 
     const onKey = (down) => (e) => {
       const k = e.key.toLowerCase();
+      if (!started) {
+        // level select: ◀ ▶ (or ▲ ▼) move, SPACE / ENTER start
+        if (!down) return;
+        const move = { arrowleft: -1, a: -1, arrowup: -1, w: -1, arrowright: 1, d: 1, arrowdown: 1, s: 1 }[k];
+        if (move) {
+          e.preventDefault();
+          sel = (sel + move + LEVELS.length) % LEVELS.length;
+          setSelect(sel);
+          playCue('click');
+        } else if ((e.code === 'Space' || k === ' ' || k === 'enter') && !e.repeat) {
+          e.preventDefault();
+          unlockAudio();
+          begin(sel);
+        }
+        return;
+      }
       const map = { arrowleft: 'l', a: 'l', arrowright: 'r', d: 'r', arrowup: 'u', w: 'u', arrowdown: 'd', s: 'd' };
       if (map[k]) {
         e.preventDefault();
@@ -318,13 +348,15 @@ export default function Ride({ act }) {
       last = now;
       t += dt;
 
-      if (!crashed) {
+      if (!started) {
+        offset = (offset + SCROLL * 0.6 * dt) % strip.width; // idle street behind the menu
+      } else if (!crashed) {
         const L = LEVELS[lv];
         // ── level progress ──
-        if (score >= L.until && lv < LEVELS.length - 1) startLevel(lv + 1);
+        if (score - lvScore >= L.len && lv < LEVELS.length - 1) startLevel(lv + 1);
 
         // ── speed: ramps across the level; throttle/brake on top ──
-        const span = Number.isFinite(L.until) ? L.until - lvScore : 300;
+        const span = Number.isFinite(L.len) ? L.len : 300;
         const p = Math.min(1, (score - lvScore) / span);
         const base = L.kmh[0] + (L.kmh[1] - L.kmh[0]) * p;
         const target = keys.has('l') ? base + 20 : keys.has('r') ? Math.max(20, base - 20) : base;
@@ -465,12 +497,35 @@ export default function Ride({ act }) {
     <div className="ride">
       <div className="ride-frame" data-level={hud.lv + 1}>
         <canvas ref={canvasRef} width={VW} height={VH} className="ride-cv" aria-label="Ride the scooter" />
-        <div className="ride-hud ride-tl">
+        <div className="ride-hud ride-tl" style={select != null ? { visibility: 'hidden' } : undefined}>
           <span className={`ride-lv ride-lv-${hud.lv + 1}`}>LV {hud.lv + 1}</span> {hud.speed} KM/H
         </div>
         <div className={`ride-hud ride-tr ride-score ${hud.blink ? 'is-blink' : ''}`}>
           <span className="k">HI {pad5(hi)}</span> {pad5(hud.score)}
         </div>
+        {select != null && (
+          <div className="ride-select" role="dialog" aria-label="Choose a level">
+            <p className="ride-select-t">CHOOSE YOUR LEVEL</p>
+            <div className="ride-select-row">
+              {LEVELS.map((L, i) => (
+                <button
+                  key={L.name}
+                  type="button"
+                  className={`ride-pick ride-pick-${i + 1} ${select === i ? 'is-on' : ''}`}
+                  onClick={() => beginRef.current?.(i)}
+                >
+                  <span className="ride-pick-n">LV {i + 1}</span>
+                  <span className="ride-pick-name">{L.name}</span>
+                  <span className="ride-pick-tag">{L.tag}</span>
+                  <span className="ride-pick-kmh">{L.kmh[0]}–{L.kmh[1]} KM/H</span>
+                </button>
+              ))}
+            </div>
+            <p className="ride-select-k">
+              <kbd>◀</kbd> <kbd>▶</kbd> CHOOSE · <kbd className="wide">SPACE</kbd> START
+            </p>
+          </div>
+        )}
         {banner > 0 && !over && (
           <div className={`ride-level ride-level-${banner}`} role="status">
             <p className="ride-level-n">LEVEL {banner}</p>
@@ -488,7 +543,7 @@ export default function Ride({ act }) {
             {over.isBest && over.score > 0 && <p className="ride-over-new">NEW HIGH SCORE!</p>}
           </div>
         )}
-        {isTouch ? <TouchPad nextLabel="SKIP" /> : <div className="ride-keys" aria-hidden="true">
+        {isTouch ? <TouchPad nextLabel={select != null ? 'START' : 'SKIP'} /> : select == null && <div className="ride-keys" aria-hidden="true">
           <span className="kgrp">
             <kbd>W</kbd>
             <kbd>S</kbd>

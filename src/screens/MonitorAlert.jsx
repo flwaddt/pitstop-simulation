@@ -2,15 +2,15 @@ import { Pin } from '../components/Pixel.jsx';
 import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
 import PixelMap from '../components/PixelMap.jsx';
 
-/** UI 8 — the Monitor gets contact info + live location and calls the emergency service. */
+/** UI 8 — the Monitor gets contact info + live location and first calls the rider back. */
 export default function MonitorAlert({ act, state }) {
   return (
     <RetroWindow
       band={{ tone: 'yellow', text: 'MONITOR ALERT' }}
       deco={{ spinnerRight: true }}
       footer={
-        <RetroButton tone="danger" className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('CONTACT_115')}>
-          EMERGENCY SERVICE
+        <RetroButton tone="danger" className="autopress" style={{ '--at': `${(state.auto || 5) - 0.5}s` }} onClick={() => act('CALL_RIDER')}>
+          CALL RIDER
         </RetroButton>
       }
     >
