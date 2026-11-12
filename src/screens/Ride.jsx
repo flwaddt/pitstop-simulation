@@ -590,10 +590,7 @@ export default function Ride({ act }) {
                   className={`ride-pick ride-pick-${i + 1} ${select === i ? 'is-on' : ''}`}
                   onClick={() => beginRef.current?.(i)}
                 >
-                  <span className="ride-pick-n">LV {i + 1}</span>
                   <span className="ride-pick-name">{L.name}</span>
-                  <span className="ride-pick-tag">{L.tag}</span>
-                  <span className="ride-pick-kmh">{L.kmh[0]}–{L.kmh[1]} KM/H</span>
                 </button>
               ))}
             </div>

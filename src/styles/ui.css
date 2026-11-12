@@ -2149,7 +2149,7 @@ body {
 .ride-pick {
   --c: var(--green-t);
   width: 21cqw;
-  padding: 1.6cqw 1cqw 1.4cqw;
+  padding: 2.6cqw 1cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2171,7 +2171,7 @@ body {
   transform: translateY(-0.6cqw);
 }
 .ride-pick-n { font-size: 2cqw; letter-spacing: 0.2em; color: #9aa39c; }
-.ride-pick-name { font-family: var(--font-pixel); font-size: 3cqw; color: var(--c); }
+.ride-pick-name { font-family: var(--font-pixel); font-size: 3.2cqw; color: var(--c); }
 .ride-pick-tag { font-size: 2.2cqw; letter-spacing: 0.08em; }
 .ride-pick-kmh { font-size: 1.8cqw; color: #9aa39c; }
 .ride-pick-3.is-on .ride-pick-name { animation: blink 0.5s steps(2) infinite; }
