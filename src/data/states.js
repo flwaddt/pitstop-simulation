@@ -60,7 +60,7 @@ export const STATES = {
   },
 
   // Playable ride in 3 levels (EASY → MEDIUM → SUPER HARD, Chrome-Dino style).
-  // Hitting anything is GAME OVER → the crash; the last level can't be survived.
+  // Hitting anything is GAME OVER → the crash. Every level is hard but fair.
   // SPACE skips.
   RIDE: {
     type: 'ui',

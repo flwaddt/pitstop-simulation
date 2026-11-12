@@ -14,7 +14,8 @@ import { getBest, recordScore, pad5 } from '../lib/score.js';
  * Endless runner in the spirit of the Chrome Dino game, in 3 levels:
  *   LV 1 EASY       — slow, sparse single vehicles and obstacles
  *   LV 2 MEDIUM     — faster, denser, "walls" with one gap, a reckless rider
- *   LV 3 HARD       — very fast; walls close the WHOLE road: you can't get through
+ *   LV 3 HARD       — very fast, dense, walls with one narrow gap — hard but always
+ *                     survivable: every wall has a way through, every rider can be dodged
  * The ride opens on a level select (◀ ▶ to choose, SPACE/ENTER to go). The
  * score counts up with distance; clearing LEVELS[i].len points moves up a level. Touching ANY vehicle or obstacle is GAME OVER → the crash scene.
  *
@@ -35,14 +36,14 @@ const ROWS = [56, 76, 104, 124];
  * escalating (EASY → MEDIUM → HARD). len = points to clear the level; kmh = [start, end]
  * speed across the level; spawn = seconds between spawns [min, max];
  * wall = chance a spawn is a wall across the road; gaps = free rows in a wall
- * (0 = no way through); rider = seconds until the reckless rider (null = none);
+ * (always ≥ 1 so there is a way through); rider = seconds until the reckless rider (null = none);
  * group = max obstacles in one cluster (like the Dino's cactus groups);
  * weave = zig-zagging riders (the Dino's pterodactyls) can appear.
  */
 const LEVELS = [
   { name: 'EASY', tag: 'CHILL RIDE', len: 150, kmh: [35, 60], spawn: [1.3, 2.2], wall: 0, gaps: 2, rider: null, group: 2, weave: false },
   { name: 'MEDIUM', tag: 'RUSH HOUR', len: 230, kmh: [65, 100], spawn: [0.75, 1.25], wall: 0.25, gaps: 1, rider: 4, group: 3, weave: true },
-  { name: 'HARD', tag: 'IMPOSSIBLE?', len: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5, group: 3, weave: true },
+  { name: 'HARD', tag: 'NO MERCY', len: Infinity, kmh: [95, 130], spawn: [0.55, 0.9], wall: 0.4, gaps: 1, rider: 3, group: 3, weave: true },
 ];
 /** Points per day/night switch (the Dino game flips to night every 700 of its points). */
 const NIGHT_EVERY = 300;
@@ -300,19 +301,17 @@ export default function Ride({ act }) {
 
     const spawn = () => {
       const L = LEVELS[lv];
-      if (r() < L.wall) {
+      if (r() < L.wall && !traffic.some((o) => o.x < 50)) {
         // A wall across the road. Its parts all move at road speed, so it
         // stays a straight line. gaps = how many rows are left open.
         const open = new Set();
         while (open.size < L.gaps) open.add(Math.floor(r() * ROWS.length));
         ROWS.forEach((y, i) => {
           if (open.has(i)) return;
-          // the last level fills the space between rows too: nothing gets through
-          const type = L.gaps === 0 ? 'barrier' : pick(['cone', 'hole']);
-          traffic.push(obstacle(y, type));
-          if (L.gaps === 0) traffic.push(obstacle(y + 10, 'barrier'), obstacle(y - 10, 'barrier'));
+          // small pieces only, so the open row is always wide enough to ride through
+          traffic.push(obstacle(y, pick(['cone', 'hole'])));
         });
-        return L.gaps === 0 ? 0.3 : 0.7;
+        return 0.7;
       }
       const k = r();
       // weaving rider — the Dino's pterodactyl: zig-zags across a lane
@@ -402,7 +401,7 @@ export default function Ride({ act }) {
     let last = performance.now();
     let raf;
     const frame = (now) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); // rAF time can precede `last` on frame 1
       last = now;
       t += dt;
 
@@ -449,7 +448,7 @@ export default function Ride({ act }) {
 
         // ── the reckless rider (medium + last level) ──
         if (t >= riderAt) {
-          traffic.push({ ...moto(player.y, 26, 1), shirt: '#3d6fb8', helmet: '#d93a3a', second: true, lock: lv === 2 });
+          traffic.push({ ...moto(player.y, 26, 1), shirt: '#3d6fb8', helmet: '#d93a3a', second: true });
           riderAt = Infinity;
           setWarn('ahead');
           playCue('alarm');
@@ -463,9 +462,8 @@ export default function Ride({ act }) {
           }
           o.x += (o.v + scroll * 0.55) * dt;
           const dx = player.x - o.x;
-          // medium: commits early, a quick swerve dodges him.
-          // last level: locks on right up to impact.
-          if (o.lock ? dx > 4 : dx > 60) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), (o.lock ? 140 : 45) * dt);
+          // homes in, but commits early (faster on HARD) — a quick swerve always dodges him
+          if (dx > (lv === 2 ? 85 : 60)) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), (lv === 2 ? 50 : 45) * dt);
         }
         for (let i = traffic.length - 1; i >= 0; i--) {
           const o = traffic[i];
