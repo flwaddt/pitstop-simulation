@@ -25,6 +25,10 @@ const SYNTH = {
     [1200, 0.05, 'square', 0.03], [0, 0.04], [900, 0.05, 'square', 0.03], [0, 0.04],
     [1500, 0.05, 'square', 0.03], [0, 0.25], [440, 0.4, 'sine', 0.05], [0, 0.3], [440, 0.4, 'sine', 0.05],
   ],
+  // Dino-style "every 100 points" blip
+  point: [[988, 0.05, 'square', 0.035], [0, 0.02], [1319, 0.08, 'square', 0.035]],
+  // level up
+  level: [[523, 0.07, 'square', 0.045], [659, 0.07, 'square', 0.045], [784, 0.07, 'square', 0.045], [1046, 0.16, 'square', 0.05]],
   impact: [[90, 0.4, 'sine', 0.4, 40], [0, 0.02], [180, 0.12, 'sawtooth', 0.06, 60]],
   // At 0: ~0.2 s silence → deep low hit → BEEP—BEEP
   zeroHit: [

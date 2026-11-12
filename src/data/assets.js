@@ -49,10 +49,6 @@ export const CONFIG = {
   loadingSeconds: 0.8,
   /** Playable riding segment between Scene 1 and the crash. */
   includeRide: true,
-  /** RIDE: seconds before the second rider comes at you (Space works any time). */
-  rideEventSeconds: 6,
-  /** Chance (0–1) that the second rider locks on and can't be dodged. */
-  rideHitChance: 0.9,
   /**
    * Emergency branch: after NO RESPONSE every screen moves on by itself,
    * like signals arriving. Seconds per screen (SPACE skips ahead).

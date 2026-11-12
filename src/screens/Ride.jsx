@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { CONFIG } from '../data/assets.js';
 import { playCue, unlockAudio } from '../lib/audio.js';
 import { isTouch } from '../lib/device.js';
 import TouchPad from '../components/TouchPad.jsx';
+import { getBest, recordScore, pad5 } from '../lib/score.js';
 
 /**
  * RIDE — playable pixel street between Scene 1 and the crash.
@@ -11,10 +11,15 @@ import TouchPad from '../components/TouchPad.jsx';
  * crisp pixels. The rider travels RIGHT → LEFT (as in Scene 2), in the upper
  * lane (right-hand traffic). Oncoming traffic uses the lower lane.
  *
- *   W A S D / arrow keys — move the scooter
- *   SPACE                — go to the crash scene
- * After CONFIG.rideEventSeconds a second rider comes the other way, drifting
- * into your lane; touching him — or any other vehicle — ends the ride and cuts to the crash.
+ * Endless runner in the spirit of the Chrome Dino game, in 3 levels:
+ *   LV 1 EASY       — slow, sparse single vehicles and obstacles
+ *   LV 2 MEDIUM     — faster, denser, "walls" with one gap, a reckless rider
+ *   LV 3 SUPER HARD — very fast; walls close the WHOLE road: you can't get through
+ * The score counts up with distance; reaching LEVELS[i].until moves to the
+ * next level. Touching ANY vehicle or obstacle is GAME OVER → the crash scene.
+ *
+ *   W S / ▲ ▼  — dodge up / down      A / ◀ — throttle (+points)   D / ▶ — brake
+ *   SPACE      — skip to the crash scene
  */
 const VW = 320;
 const VH = 180;
@@ -22,8 +27,20 @@ const ROAD_T = 42; // road top
 const ROAD_B = 138; // road bottom
 const MID = 90; // centre line
 const SCROLL = 52; // px/s the world moves past at cruise speed
-const CRUISE_KMH = 30;
-const MAX_KMH = 100;
+const CRUISE_KMH = 30; // SCROLL is calibrated at this speed
+/** Rows (y centres) vehicles and obstacles use: two per lane. */
+const ROWS = [56, 76, 104, 124];
+/**
+ * The three levels. until = score that ends the level; kmh = [start, end]
+ * speed across the level; spawn = seconds between spawns [min, max];
+ * wall = chance a spawn is a wall across the road; gaps = free rows in a wall
+ * (0 = no way through); rider = seconds until the reckless rider (null = none).
+ */
+const LEVELS = [
+  { name: 'EASY', until: 150, kmh: [35, 55], spawn: [1.5, 2.4], wall: 0, gaps: 2, rider: null },
+  { name: 'MEDIUM', until: 380, kmh: [65, 95], spawn: [0.8, 1.3], wall: 0.3, gaps: 1, rider: 4 },
+  { name: 'SUPER HARD', until: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5 },
+];
 
 /* ── seeded random so the street looks the same every time ── */
 function rng(seed) {
@@ -152,11 +169,41 @@ function drawCar(g, x, y, dir, col) {
   R(-14, 3, 1, 3, '#fff4c2');
 }
 
+/* Road obstacles (static, scroll with the street). */
+function drawObstacle(g, o) {
+  const x = Math.round(o.x);
+  const y = Math.round(o.y);
+  const R = (dx, dy, w, h, c) => {
+    g.fillStyle = c;
+    g.fillRect(x + dx * P, y + dy * P, w * P, h * P);
+  };
+  if (o.type === 'cone') {
+    R(-3, -2, 7, 5, 'rgba(0,0,0,.25)');
+    R(-3, -3, 6, 6, '#111');
+    R(-2, -2, 4, 4, '#ff7a1a');
+    R(-1, -1, 2, 2, '#f4f4f4');
+  } else if (o.type === 'hole') {
+    R(-6, -3, 12, 6, '#1d1f23');
+    R(-5, -2, 10, 4, '#26292e');
+    R(-4, -1, 3, 1, '#4a4e55');
+    R(-6, 2, 12, 1, '#55595f');
+  } else {
+    // barrier: red/white striped block
+    R(-2, -7, 5, 15, 'rgba(0,0,0,.25)');
+    R(-2, -7, 4, 14, '#111');
+    for (let i = 0; i < 6; i++) R(-1, -6 + i * 2, 2, 2, i % 2 ? '#f4f4f4' : '#e3262a');
+  }
+}
+const OB = { cone: [6, 6], hole: [12, 6], barrier: [4, 14] };
+
 export default function Ride({ act }) {
   const canvasRef = useRef(null);
-  const [speed, setSpeed] = useState(30);
+  const [hud, setHud] = useState({ speed: LEVELS[0].kmh[0], score: 0, blink: false, lv: 0 });
   const [warn, setWarn] = useState(false);
+  const [banner, setBanner] = useState(0); // level number being announced (1-based), 0 = none
+  const [over, setOver] = useState(null);
   const doneRef = useRef(false);
+  const best = useRef(getBest());
 
   useEffect(() => {
     const cv = canvasRef.current;
@@ -164,33 +211,85 @@ export default function Ride({ act }) {
     g.imageSmoothingEnabled = false;
     const strip = buildStrip();
     const keys = new Set();
-    const r = rng(42);
+    // A new random street every run, so each try plays differently.
+    const r = rng((Date.now() % 100000) + 1);
+    const pick = (arr) => arr[Math.floor(r() * arr.length)];
 
-    const player = { x: 220, y: 64, w: 18 * P, h: 9 * P };
+    const player = { x: 220, y: 66, w: 18 * P, h: 9 * P };
     let offset = 0;
     let t = 0;
-    let spawnIn = 0.8;
-    let eventAt = CONFIG.rideEventSeconds;
+    let lv = 0;
+    let lvStart = 0; // t when the current level began
+    let lvScore = 0; // score when the current level began
+    let spawnIn = 1.2;
+    let riderAt = Infinity;
     let crashed = 0;
-    let shownSpeed = 30;
+    let kmh = LEVELS[0].kmh[0];
+    let score = 0;
+    let nextMilestone = 100;
+    let blinkUntil = 0;
+    let lastHud = 0;
     const traffic = [];
 
-    const finish = (how) => {
+    const finish = () => {
       if (doneRef.current) return;
       doneRef.current = true;
       act('CRASH');
     };
 
+    const announce = (n) => {
+      setBanner(n);
+      setTimeout(() => setBanner((b) => (b === n ? 0 : b)), 1800);
+    };
+    announce(1);
+
+    const startLevel = (n) => {
+      lv = n;
+      lvStart = t;
+      lvScore = score;
+      const L = LEVELS[n];
+      riderAt = L.rider == null ? Infinity : t + L.rider;
+      spawnIn = n === 2 ? 0.9 : 1.1; // a short breather while the banner shows
+      announce(n + 1);
+      playCue('level');
+    };
+
+    // Is the spawn point free around row y?
+    const clear = (y, gap = 46) => !traffic.some((o) => o.x < -30 + gap && Math.abs(o.y - y) < 16);
+
+    const moto = (y, v, dir) => ({ x: -30, y, v, dir, type: 'moto', w: 18 * P, h: 9 * P, shirt: pick(SHIRTS), helmet: pick(HELMETS) });
+    const obstacle = (y, type) => ({ x: -20, y, v: 0, type, w: OB[type][0] * P, h: OB[type][1] * P, ob: true });
+
     const spawn = () => {
-      const kind = r();
-      if (kind < 0.55) {
-        // same direction, slower: comes from ahead (left) and we pass it
-        traffic.push({ x: -30, y: ROAD_T + 14 + r() * 26, v: -(18 + r() * 18), dir: -1, type: 'moto', shirt: SHIRTS[Math.floor(r() * SHIRTS.length)], helmet: HELMETS[Math.floor(r() * HELMETS.length)] });
-      } else if (kind < 0.85) {
-        traffic.push({ x: -30, y: MID + 14 + r() * 26, v: 35 + r() * 20, dir: 1, type: 'moto', shirt: SHIRTS[Math.floor(r() * SHIRTS.length)], helmet: HELMETS[Math.floor(r() * HELMETS.length)] });
-      } else {
-        traffic.push({ x: -40, y: MID + 24, v: 30 + r() * 10, dir: 1, type: 'car', col: CARS[Math.floor(r() * CARS.length)] });
+      const L = LEVELS[lv];
+      if (r() < L.wall) {
+        // A wall across the road. Its parts all move at road speed, so it
+        // stays a straight line. gaps = how many rows are left open.
+        const open = new Set();
+        while (open.size < L.gaps) open.add(Math.floor(r() * ROWS.length));
+        ROWS.forEach((y, i) => {
+          if (open.has(i)) return;
+          // the last level fills the space between rows too: nothing gets through
+          const type = L.gaps === 0 ? 'barrier' : pick(['cone', 'hole']);
+          traffic.push(obstacle(y, type));
+          if (L.gaps === 0) traffic.push(obstacle(y + 10, 'barrier'), obstacle(y - 10, 'barrier'));
+        });
+        return L.gaps === 0 ? 0.3 : 0.7;
       }
+      const k = r();
+      if (k < 0.35) {
+        const y = pick(ROWS.slice(0, 2)) + (r() - 0.5) * 8;
+        if (clear(y)) traffic.push(moto(y, -(16 + r() * 20), -1)); // slower rider in your lane
+      } else if (k < 0.6) {
+        const y = pick(ROWS.slice(2)) + (r() - 0.5) * 8;
+        if (clear(y)) traffic.push(moto(y, 35 + r() * 25, 1)); // oncoming rider
+      } else if (k < 0.75) {
+        if (clear(114, 70)) traffic.push({ x: -40, y: 114, v: 30 + r() * 15, dir: 1, type: 'car', w: 28 * P, h: 14 * P, col: pick(CARS) });
+      } else {
+        const y = pick(ROWS);
+        if (clear(y)) traffic.push(obstacle(y, pick(['cone', 'cone', 'hole', 'barrier'])));
+      }
+      return 0;
     };
 
     const onKey = (down) => (e) => {
@@ -204,7 +303,7 @@ export default function Ride({ act }) {
       if (down && (e.code === 'Space' || k === ' ') && !e.repeat) {
         e.preventDefault();
         unlockAudio();
-        finish('space');
+        finish();
       }
     };
     const kd = onKey(true);
@@ -220,37 +319,48 @@ export default function Ride({ act }) {
       t += dt;
 
       if (!crashed) {
-        // movement
-        const sp = 70;
-        if (keys.has('l')) player.x -= sp * dt;
-        if (keys.has('r')) player.x += sp * dt;
-        if (keys.has('u')) player.y -= sp * 0.8 * dt;
-        if (keys.has('d')) player.y += sp * 0.8 * dt;
-        player.x = Math.max(24, Math.min(VW - 24, player.x));
-        player.y = Math.max(ROAD_T + 12, Math.min(ROAD_B - 12, player.y));
-        // ← / A = throttle (you ride right → left), → / D = brake.
-        // Hold throttle to climb to MAX_KMH; let go and it eases back to cruise.
-        if (keys.has('l')) shownSpeed = Math.min(MAX_KMH, shownSpeed + 38 * dt);
-        else if (keys.has('r')) shownSpeed = Math.max(10, shownSpeed - 45 * dt);
-        else shownSpeed += (CRUISE_KMH - shownSpeed) * Math.min(1, dt * 0.6);
+        const L = LEVELS[lv];
+        // ── level progress ──
+        if (score >= L.until && lv < LEVELS.length - 1) startLevel(lv + 1);
 
-        const scroll = SCROLL * (shownSpeed / CRUISE_KMH);
+        // ── speed: ramps across the level; throttle/brake on top ──
+        const span = Number.isFinite(L.until) ? L.until - lvScore : 300;
+        const p = Math.min(1, (score - lvScore) / span);
+        const base = L.kmh[0] + (L.kmh[1] - L.kmh[0]) * p;
+        const target = keys.has('l') ? base + 20 : keys.has('r') ? Math.max(20, base - 20) : base;
+        kmh += (target - kmh) * Math.min(1, dt * 2.5);
+        const scroll = SCROLL * (kmh / CRUISE_KMH);
         offset = (offset + scroll * dt) % strip.width;
 
-        spawnIn -= dt;
-        if (spawnIn <= 0) {
-          spawn();
-          spawnIn = 1.3 + r() * 1.6;
+        // ── movement (sideways gets quicker as the road gets faster) ──
+        const side = 70 + Math.max(0, kmh - 35) * 0.3;
+        if (keys.has('u')) player.y -= side * dt;
+        if (keys.has('d')) player.y += side * dt;
+        if (keys.has('l')) player.x -= 40 * dt;
+        else if (keys.has('r')) player.x += 40 * dt;
+        else player.x += (220 - player.x) * Math.min(1, dt * 0.8);
+        player.x = Math.max(150, Math.min(VW - 24, player.x));
+        player.y = Math.max(ROAD_T + 12, Math.min(ROAD_B - 12, player.y));
+
+        // ── score: distance, Dino-style blip every 100 ──
+        score += kmh * dt * 0.25;
+        if (score >= nextMilestone) {
+          nextMilestone += 100;
+          blinkUntil = t + 0.9;
+          playCue('point');
         }
 
-        // the second rider: comes the other way and drifts into your lane
-        // The player can try to dodge, but most of the time it can't be avoided:
-        // with chance CONFIG.rideHitChance he locks on (faster sideways than
-        // you, committing only at the last moment); otherwise he swerves away.
-        if (t >= eventAt) {
-          const aggressive = Math.random() < (CONFIG.rideHitChance ?? 0.9);
-          traffic.push({ x: -36, y: player.y, v: 26, dir: 1, type: 'moto', shirt: '#3d6fb8', helmet: '#d93a3a', second: true, aggressive });
-          eventAt = Infinity;
+        // ── spawning ──
+        spawnIn -= dt;
+        if (spawnIn <= 0) {
+          const extra = spawn();
+          spawnIn = L.spawn[0] + r() * (L.spawn[1] - L.spawn[0]) + extra;
+        }
+
+        // ── the reckless rider (medium + last level) ──
+        if (t >= riderAt) {
+          traffic.push({ ...moto(player.y, 26, 1), shirt: '#3d6fb8', helmet: '#d93a3a', second: true, lock: lv === 2 });
+          riderAt = Infinity;
           setWarn('ahead');
           playCue('alarm');
         }
@@ -260,47 +370,41 @@ export default function Ride({ act }) {
             o.x += (o.v + scroll) * dt;
             continue;
           }
-          // slower approach so the player sees it coming
           o.x += (o.v + scroll * 0.55) * dt;
           const dx = player.x - o.x;
-          if (o.aggressive) {
-            // homes in faster than you can move sideways; commits when very close
-            if (dx > 20) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), 62 * dt);
-          } else if (dx > 70) {
-            o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), 15 * dt);
-          } else {
-            // loses his nerve and swerves away
-            // swerve toward whichever side of the road has more room
-            const away = player.y - ROAD_T > ROAD_B - player.y ? -1 : 1;
-            o.y = Math.max(ROAD_T + 10, Math.min(ROAD_B - 10, o.y + away * 55 * dt));
-          }
+          // medium: commits early, a quick swerve dodges him.
+          // last level: locks on right up to impact.
+          if (o.lock ? dx > 4 : dx > 60) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), (o.lock ? 140 : 45) * dt);
         }
         for (let i = traffic.length - 1; i >= 0; i--) {
           const o = traffic[i];
           if (o.x > VW + 70) {
             if (o.second) {
-              // dodged! he comes back around for another try
-              eventAt = t + 2.5;
+              score += 50;
+              riderAt = t + 5 + r() * 3;
               setWarn('miss');
               playCue('safe');
+              setTimeout(() => setWarn((w) => (w === 'miss' ? false : w)), 1400);
             }
             traffic.splice(i, 1);
           }
         }
-        // collisions
+
+        // ── collisions: anything = GAME OVER ──
         for (const o of traffic) {
-          const ow = (o.type === 'car' ? 28 : 18) * P;
-          const oh = (o.type === 'car' ? 14 : 9) * P;
-          if (Math.abs(o.x - player.x) < (ow + player.w) / 2 - 3 && Math.abs(o.y - player.y) < (oh + player.h) / 2 - 2) {
-            // Like the original version: touching ANY vehicle ends the ride
-            // and cuts straight to the crash scene.
+          if (Math.abs(o.x - player.x) < (o.w + player.w) / 2 - 3 && Math.abs(o.y - player.y) < (o.h + player.h) / 2 - 2) {
             crashed = t;
             playCue('impact');
+            const final = Math.floor(score);
+            const isBest = recordScore(final);
+            setWarn(false);
+            setBanner(0);
+            setOver({ score: final, best: Math.max(final, best.current), isBest, lv });
             break;
           }
         }
-      } else if (t - crashed > 0.25) {
-        finish('hit');
+      } else if (t - crashed > 1.3) {
+        finish();
       }
 
       // ── draw ──
@@ -308,7 +412,8 @@ export default function Ride({ act }) {
       g.drawImage(strip, ox - strip.width, 0);
       g.drawImage(strip, ox, 0);
 
-      const all = [...traffic, { player: true, ...player }].sort((a, b) => a.y - b.y);
+      for (const o of traffic) if (o.ob) drawObstacle(g, o); // obstacles lie on the road
+      const all = [...traffic.filter((o) => !o.ob), { player: true, ...player }].sort((a, b) => a.y - b.y);
       for (const o of all) {
         if (o.player) drawScooter(g, o.x, o.y, -1, '#2f7a45', '#121212', { pitstop: true, blink: Math.floor(t * 3) % 2 === 0 });
         else if (o.type === 'car') drawCar(g, o.x, o.y, o.dir, o.col);
@@ -319,13 +424,30 @@ export default function Ride({ act }) {
           g.fillRect(Math.round(o.x) - 2, Math.round(o.y) - 18, 4, 4);
         }
       }
+      // speed lines at high speed
+      if (!crashed && kmh > 80) {
+        g.fillStyle = `rgba(255,255,255,${Math.min(0.35, (kmh - 80) / 150)})`;
+        for (let i = 0; i < 6; i++) {
+          const ly = ROAD_T + ((i * 37 + Math.floor(t * 50) * 13) % (ROAD_B - ROAD_T));
+          const lx = (i * 71 + offset * 3) % VW;
+          g.fillRect(Math.round(lx), ly, 18, 1);
+        }
+      }
+      // red danger tint on the last level
+      if (!crashed && lv === 2) {
+        g.fillStyle = `rgba(227,38,42,${0.06 + 0.05 * Math.sin(t * 8)})`;
+        g.fillRect(0, 0, VW, VH);
+      }
       if (crashed) {
         const k = 1 - Math.min(1, (t - crashed) / 0.25);
         g.fillStyle = `rgba(255,255,255,${0.7 * k})`;
         g.fillRect(0, 0, VW, VH);
       }
 
-      setSpeed(Math.round(shownSpeed));
+      if (now - lastHud > 80 || crashed) {
+        lastHud = now;
+        setHud({ speed: Math.round(kmh), score: Math.floor(score), blink: t < blinkUntil && Math.floor(t * 8) % 2 === 0, lv });
+      }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -338,35 +460,53 @@ export default function Ride({ act }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const hi = Math.max(best.current, over?.best ?? 0);
   return (
     <div className="ride">
-      <div className="ride-frame">
+      <div className="ride-frame" data-level={hud.lv + 1}>
         <canvas ref={canvasRef} width={VW} height={VH} className="ride-cv" aria-label="Ride the scooter" />
         <div className="ride-hud ride-tl">
-          <span className="k">SPEED</span> {speed} KM/H
+          <span className={`ride-lv ride-lv-${hud.lv + 1}`}>LV {hud.lv + 1}</span> {hud.speed} KM/H
         </div>
-        <div className="ride-hud ride-tr">
-          <i className="ride-dot" /> PITSTOP ACTIVE
+        <div className={`ride-hud ride-tr ride-score ${hud.blink ? 'is-blink' : ''}`}>
+          <span className="k">HI {pad5(hi)}</span> {pad5(hud.score)}
         </div>
-        {warn === 'ahead' && <div className="ride-warn">! RIDER AHEAD — DODGE !</div>}
-        {warn === 'miss' && <div className="ride-warn ride-miss">NEAR MISS! — HE IS COMING BACK</div>}
-        {isTouch ? <TouchPad nextLabel="CONTINUE" /> : <div className="ride-keys" aria-hidden="true">
+        {banner > 0 && !over && (
+          <div className={`ride-level ride-level-${banner}`} role="status">
+            <p className="ride-level-n">LEVEL {banner}</p>
+            <p className="ride-level-name">{LEVELS[banner - 1].name}</p>
+          </div>
+        )}
+        {warn === 'ahead' && !banner && <div className="ride-warn">! RIDER AHEAD — DODGE !</div>}
+        {warn === 'miss' && !banner && <div className="ride-warn ride-miss">DODGED! +50</div>}
+        {over && (
+          <div className="ride-over" role="status">
+            <p className="ride-over-t">GAME OVER</p>
+            <p className="ride-over-s">
+              LV {over.lv + 1} · SCORE {pad5(over.score)} <span className="k">HI {pad5(over.best)}</span>
+            </p>
+            {over.isBest && over.score > 0 && <p className="ride-over-new">NEW HIGH SCORE!</p>}
+          </div>
+        )}
+        {isTouch ? <TouchPad nextLabel="SKIP" /> : <div className="ride-keys" aria-hidden="true">
           <span className="kgrp">
             <kbd>W</kbd>
-            <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd>
           </span>
           /
           <span className="kgrp">
             <kbd>▲</kbd>
-            <kbd>◀</kbd>
             <kbd>▼</kbd>
-            <kbd>▶</kbd>
           </span>
-          RIDE
+          DODGE
           <span className="sep">·</span>
-          <kbd className="wide">SPACE</kbd> CONTINUE
+          <span className="kgrp">
+            <kbd>A</kbd>
+            <kbd>D</kbd>
+          </span>
+          SPEED
+          <span className="sep">·</span>
+          <kbd className="wide">SPACE</kbd> SKIP
         </div>}
       </div>
     </div>

@@ -2045,3 +2045,38 @@ body {
   background: var(--green) !important;
   color: var(--ink) !important;
 }
+
+/* ── Ride: levels, Dino-style score, GAME OVER ── */
+.ride-score { color: var(--cream); font-variant-numeric: tabular-nums; }
+.ride-score.is-blink { color: var(--yellow); }
+.ride-lv { padding: 0 0.6cqw; margin-right: 0.4cqw; color: var(--ink); }
+.ride-lv-1 { background: var(--green-t); }
+.ride-lv-2 { background: var(--yellow); }
+.ride-lv-3 { background: var(--red-t); color: #fff; animation: blink 0.5s steps(2) infinite; }
+.ride-level,
+.ride-over {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  padding: 1.4cqw 3.2cqw;
+  background: rgb(10 14 12 / 0.88);
+  border: 0.35cqw solid var(--ink);
+  box-shadow: inset 0 0 0 0.25cqw #3b433f;
+  text-align: center;
+  white-space: nowrap;
+  animation: overIn 0.2s steps(3);
+}
+@keyframes overIn { from { transform: translate(-50%, -50%) scale(0.6); } }
+.ride-level p, .ride-over p { margin: 0; }
+.ride-level-n { font-family: var(--font-term); font-size: 2.6cqw; letter-spacing: 0.2em; color: #9aa39c; }
+.ride-level-name { margin-top: 0.6cqw !important; font-family: var(--font-pixel); font-size: 4cqw; letter-spacing: 0.06em; }
+.ride-level-1 .ride-level-name { color: var(--green-t); }
+.ride-level-2 .ride-level-name { color: var(--yellow); }
+.ride-level-3 { border-color: var(--red-t); }
+.ride-level-3 .ride-level-name { color: var(--red-t); animation: blink 0.4s steps(2) infinite; }
+.ride-over-t { font-family: var(--font-pixel); font-size: 4.2cqw; color: var(--red-t); letter-spacing: 0.08em; }
+.ride-over-s { margin-top: 1cqw !important; font-family: var(--font-term); font-size: 2.8cqw; color: var(--cream); letter-spacing: 0.08em; }
+.ride-over-s .k { color: #8d968f; margin-left: 1.4cqw; }
+.ride-over-new { margin-top: 0.6cqw !important; font-family: var(--font-term); font-size: 2.4cqw; color: var(--yellow); animation: blink 0.5s steps(2) infinite; }
+.ride-end-score { margin-top: 1.2cqw; color: #9aa39c; font-family: var(--font-term); font-size: 2cqw; letter-spacing: 0.06em; }

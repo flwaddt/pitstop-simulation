@@ -59,8 +59,9 @@ export const STATES = {
     transition: 'fade',
   },
 
-  // Playable: move the scooter with W A S D / arrows. SPACE — or hitting the
-  // second rider — goes to the crash.
+  // Playable ride in 3 levels (EASY → MEDIUM → SUPER HARD, Chrome-Dino style).
+  // Hitting anything is GAME OVER → the crash; the last level can't be survived.
+  // SPACE skips.
   RIDE: {
     type: 'ui',
     screen: 'Ride',
