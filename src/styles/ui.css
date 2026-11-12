@@ -2177,3 +2177,35 @@ body {
 .ride-pick-3.is-on .ride-pick-name { animation: blink 0.5s steps(2) infinite; }
 .ride-select-k { display: flex; align-items: center; gap: 0.6cqw; font-family: var(--font-term); font-size: 2.2cqw; color: var(--cream); letter-spacing: 0.06em; }
 .ride-select-k kbd { font-size: 1.8cqw; }
+
+/* ── Ride: GAME OVER retry (Dino-style instant restart) ── */
+.ride-over { overflow: hidden; }
+.ride-over-try { margin-top: 0.4cqw !important; font-family: var(--font-term); font-size: 1.9cqw; color: #8d968f; letter-spacing: 0.12em; }
+.ride-over-btns { display: flex; gap: 1.2cqw; justify-content: center; margin-top: 1.2cqw; }
+.ride-over-b {
+  display: flex;
+  align-items: center;
+  gap: 0.7cqw;
+  padding: 0.5cqw 1.2cqw;
+  background: #1c2320;
+  border: 0.25cqw solid #4a524d;
+  color: var(--cream);
+  font-family: var(--font-term);
+  font-size: 2.2cqw;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.ride-over-b kbd { font-size: 1.5cqw; }
+.ride-over-b.is-retry { border-color: var(--yellow); color: var(--yellow); animation: blink 0.8s steps(2) infinite; }
+.ride-over-b:hover { background: #2a332f; }
+.ride-over-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 0.45cqw;
+  width: 100%;
+  background: var(--red-t);
+  transform-origin: left;
+  animation: overBar linear both;
+}
+@keyframes overBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }

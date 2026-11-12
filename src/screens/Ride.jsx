@@ -35,13 +35,20 @@ const ROWS = [56, 76, 104, 124];
  * escalating (EASY → MEDIUM → HARD). len = points to clear the level; kmh = [start, end]
  * speed across the level; spawn = seconds between spawns [min, max];
  * wall = chance a spawn is a wall across the road; gaps = free rows in a wall
- * (0 = no way through); rider = seconds until the reckless rider (null = none).
+ * (0 = no way through); rider = seconds until the reckless rider (null = none);
+ * group = max obstacles in one cluster (like the Dino's cactus groups);
+ * weave = zig-zagging riders (the Dino's pterodactyls) can appear.
  */
 const LEVELS = [
-  { name: 'EASY', tag: 'CHILL RIDE', len: 150, kmh: [35, 55], spawn: [1.5, 2.4], wall: 0, gaps: 2, rider: null },
-  { name: 'MEDIUM', tag: 'RUSH HOUR', len: 230, kmh: [65, 95], spawn: [0.8, 1.3], wall: 0.3, gaps: 1, rider: 4 },
-  { name: 'HARD', tag: 'IMPOSSIBLE?', len: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5 },
+  { name: 'EASY', tag: 'CHILL RIDE', len: 150, kmh: [35, 60], spawn: [1.3, 2.2], wall: 0, gaps: 2, rider: null, group: 2, weave: false },
+  { name: 'MEDIUM', tag: 'RUSH HOUR', len: 230, kmh: [65, 100], spawn: [0.75, 1.25], wall: 0.25, gaps: 1, rider: 4, group: 3, weave: true },
+  { name: 'HARD', tag: 'IMPOSSIBLE?', len: Infinity, kmh: [115, 150], spawn: [0.45, 0.7], wall: 0.55, gaps: 0, rider: 1.5, group: 3, weave: true },
 ];
+/** Points per day/night switch (the Dino game flips to night every 700 of its points). */
+const NIGHT_EVERY = 300;
+/** Seconds the GAME OVER panel waits for a retry before going to the crash scene. */
+const RETRY_SECONDS = 3;
+let tries = 0; // attempts this session (shown on GAME OVER)
 
 /* ── seeded random so the street looks the same every time ── */
 function rng(seed) {
@@ -204,7 +211,10 @@ export default function Ride({ act }) {
   const [banner, setBanner] = useState(0); // level number being announced (1-based), 0 = none
   const [over, setOver] = useState(null);
   const [select, setSelect] = useState(0); // highlighted level on the select screen; null once riding
+  const [run, setRun] = useState(0); // bumps on TRY AGAIN to restart the loop
   const beginRef = useRef(null);
+  const retryRef = useRef(null);
+  const chosenRef = useRef(null); // level picked on the select screen
   const doneRef = useRef(false);
   const best = useRef(getBest());
 
@@ -233,6 +243,7 @@ export default function Ride({ act }) {
     let nextMilestone = 100;
     let blinkUntil = 0;
     let lastHud = 0;
+    let night = 0;
     const traffic = [];
 
     const finish = () => {
@@ -258,6 +269,8 @@ export default function Ride({ act }) {
     const begin = (n) => {
       if (started) return;
       started = true;
+      tries += 1;
+      chosenRef.current = n;
       keys.clear();
       kmh = LEVELS[n].kmh[0];
       setSelect(null);
@@ -267,6 +280,17 @@ export default function Ride({ act }) {
       unlockAudio();
       begin(n);
     };
+    // GAME OVER → TRY AGAIN: restart instantly on the same level (Dino-style)
+    const retry = () => {
+      if (!crashed || doneRef.current) return;
+      setOver(null);
+      setWarn(false);
+      setBanner(0);
+      setRun((n) => n + 1);
+    };
+    retryRef.current = retry;
+    retryRef.continue = () => crashed && finish();
+    if (chosenRef.current != null) begin(chosenRef.current);
 
     // Is the spawn point free around row y?
     const clear = (y, gap = 46) => !traffic.some((o) => o.x < -30 + gap && Math.abs(o.y - y) < 16);
@@ -291,6 +315,30 @@ export default function Ride({ act }) {
         return L.gaps === 0 ? 0.3 : 0.7;
       }
       const k = r();
+      // weaving rider — the Dino's pterodactyl: zig-zags across a lane
+      if (L.weave && r() < 0.18) {
+        const y = pick(ROWS);
+        traffic.push({ ...moto(y, 20 + r() * 25, 1), weave: true, y0: y, ph: r() * 6, amp: 10 + r() * 10 });
+        return 0;
+      }
+      // obstacle cluster — the Dino's cactus groups: bigger groups at higher speed
+      if (k > 0.75) {
+        const y = pick(ROWS);
+        const n = 1 + Math.floor(r() * Math.min(L.group, 1 + (kmh - 30) / 25));
+        const tall = r() < 0.3 && kmh > 55; // a cluster spanning two rows
+        if (!clear(y, 60)) return 0;
+        for (let i = 0; i < n; i++) {
+          const ob = obstacle(y, pick(['cone', 'cone', 'barrier']));
+          ob.x -= i * 16;
+          traffic.push(ob);
+          if (tall) {
+            const ob2 = obstacle(y + (y < MID ? 14 : -14), 'cone');
+            ob2.x -= i * 16;
+            traffic.push(ob2);
+          }
+        }
+        return n * 0.12;
+      }
       if (k < 0.35) {
         const y = pick(ROWS.slice(0, 2)) + (r() - 0.5) * 8;
         if (clear(y)) traffic.push(moto(y, -(16 + r() * 20), -1)); // slower rider in your lane
@@ -308,6 +356,16 @@ export default function Ride({ act }) {
 
     const onKey = (down) => (e) => {
       const k = e.key.toLowerCase();
+      if (crashed) {
+        if (down && !e.repeat && (e.code === 'Space' || k === ' ' || k === 'r' || k === 'arrowup' || k === 'w')) {
+          e.preventDefault();
+          retry();
+        } else if (down && k === 'enter') {
+          e.preventDefault();
+          finish();
+        }
+        return;
+      }
       if (!started) {
         // level select: ◀ ▶ (or ▲ ▼) move, SPACE / ENTER start
         if (!down) return;
@@ -400,6 +458,7 @@ export default function Ride({ act }) {
         for (const o of traffic) {
           if (!o.second) {
             o.x += (o.v + scroll) * dt;
+            if (o.weave) o.y = Math.max(ROAD_T + 10, Math.min(ROAD_B - 10, o.y0 + Math.sin(t * 4 + o.ph) * o.amp));
             continue;
           }
           o.x += (o.v + scroll * 0.55) * dt;
@@ -431,11 +490,11 @@ export default function Ride({ act }) {
             const isBest = recordScore(final);
             setWarn(false);
             setBanner(0);
-            setOver({ score: final, best: Math.max(final, best.current), isBest, lv });
+            setOver({ score: final, best: Math.max(final, best.current), isBest, lv, tries });
             break;
           }
         }
-      } else if (t - crashed > 1.3) {
+      } else if (t - crashed > RETRY_SECONDS) {
         finish();
       }
 
@@ -455,6 +514,23 @@ export default function Ride({ act }) {
           g.fillRect(Math.round(o.x) - 2, Math.round(o.y) - 30, 4, 10);
           g.fillRect(Math.round(o.x) - 2, Math.round(o.y) - 18, 4, 4);
         }
+      }
+      // night falls every NIGHT_EVERY points (and lifts again), like the Dino game
+      night += ((Math.floor(score / NIGHT_EVERY) % 2) - night) * Math.min(1, dt * 1.5);
+      if (night > 0.02) {
+        g.fillStyle = `rgba(8,10,30,${0.62 * night})`;
+        g.fillRect(0, 0, VW, VH);
+        // headlight beam ahead of the scooter (you ride right → left)
+        const grd = g.createLinearGradient(player.x - 20, 0, player.x - 110, 0);
+        grd.addColorStop(0, `rgba(255,240,180,${0.35 * night})`);
+        grd.addColorStop(1, 'rgba(255,240,180,0)');
+        g.fillStyle = grd;
+        g.beginPath();
+        g.moveTo(player.x - 18, player.y - 3);
+        g.lineTo(player.x - 110, player.y - 22);
+        g.lineTo(player.x - 110, player.y + 22);
+        g.lineTo(player.x - 18, player.y + 3);
+        g.fill();
       }
       // speed lines at high speed
       if (!crashed && kmh > 80) {
@@ -490,7 +566,7 @@ export default function Ride({ act }) {
       window.removeEventListener('keyup', ku);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [run]);
 
   const hi = Math.max(best.current, over?.best ?? 0);
   return (
@@ -535,15 +611,25 @@ export default function Ride({ act }) {
         {warn === 'ahead' && !banner && <div className="ride-warn">! RIDER AHEAD — DODGE !</div>}
         {warn === 'miss' && !banner && <div className="ride-warn ride-miss">DODGED! +50</div>}
         {over && (
-          <div className="ride-over" role="status">
+          <div className="ride-over" role="status" key={`o${run}`}>
             <p className="ride-over-t">GAME OVER</p>
             <p className="ride-over-s">
               LV {over.lv + 1} · SCORE {pad5(over.score)} <span className="k">HI {pad5(over.best)}</span>
             </p>
             {over.isBest && over.score > 0 && <p className="ride-over-new">NEW HIGH SCORE!</p>}
+            <p className="ride-over-try">TRY #{over.tries}</p>
+            <div className="ride-over-btns">
+              <button type="button" className="ride-over-b is-retry" onClick={() => retryRef.current?.()}>
+                ↻ TRY AGAIN <kbd className="wide">SPACE</kbd>
+              </button>
+              <button type="button" className="ride-over-b" onClick={() => retryRef.continue?.()}>
+                CONTINUE <kbd>ENTER</kbd>
+              </button>
+            </div>
+            <i className="ride-over-bar" style={{ animationDuration: `${RETRY_SECONDS}s` }} />
           </div>
         )}
-        {isTouch ? <TouchPad nextLabel={select != null ? 'START' : 'SKIP'} /> : select == null && <div className="ride-keys" aria-hidden="true">
+        {isTouch ? <TouchPad nextLabel={over ? 'RETRY' : select != null ? 'START' : 'SKIP'} /> : select == null && !over && <div className="ride-keys" aria-hidden="true">
           <span className="kgrp">
             <kbd>W</kbd>
             <kbd>S</kbd>
