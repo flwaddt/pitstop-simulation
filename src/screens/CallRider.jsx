@@ -1,61 +1,50 @@
 import { useEffect, useState } from 'react';
-import RetroWindow, { RetroButton } from '../components/RetroWindow.jsx';
+import RetroWindow from '../components/RetroWindow.jsx';
 import { SmartPhone } from '../components/Pixel.jsx';
 import { playCue } from '../lib/audio.js';
 
-const RINGS = 3;
+const BLOCKS = 14;
+const STALL = 10; // the call never connects: the bar stops here
 
 /**
- * Between MONITOR ALERT and CONTACTING EMERGENCY SERVICE: the Monitor first
- * calls the rider back. The phone rings, nobody answers → emergency service.
+ * Between MONITOR ALERT and CONTACTING EMERGENCY SERVICE — same layout as
+ * Contacting115. The Monitor calls the rider back; it never connects
+ * (we assume the rider can't answer), the bar fails with an ✕, then the
+ * flow moves on to the emergency service.
  */
-export default function CallRider({ act, state }) {
-  const total = state.auto || 4.5;
-  const [ring, setRing] = useState(0); // 1..RINGS while ringing, RINGS+1 = no answer
+export default function CallRider({ state }) {
+  const total = (state.auto || 4) * 1000;
+  const [step, setStep] = useState(0);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    const step = ((total - 1.4) * 1000) / (RINGS + 1);
-    const ids = [];
-    for (let i = 1; i <= RINGS + 1; i++) ids.push(setTimeout(() => setRing(i), step * (i - 1) + 250));
-    return () => ids.forEach(clearTimeout);
+    const fill = total * 0.5;
+    const id = setInterval(() => setStep((s) => Math.min(s + 1, STALL)), fill / STALL);
+    const f = setTimeout(() => setFailed(true), total * 0.6);
+    return () => {
+      clearInterval(id);
+      clearTimeout(f);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const noAnswer = ring > RINGS;
   useEffect(() => {
-    if (ring >= 1 && ring <= RINGS) playCue('ring');
-    if (noAnswer) playCue('noAnswer');
-  }, [ring, noAnswer]);
+    if (step > 0 && step % 3 === 0) playCue('ring');
+  }, [step]);
+  useEffect(() => {
+    if (failed) playCue('noAnswer');
+  }, [failed]);
 
   return (
-    <RetroWindow
-      band={{ tone: noAnswer ? 'red' : 'yellow', text: noAnswer ? 'RIDER NOT ANSWERING' : 'CALLING RIDER...' }}
-      footer={
-        <RetroButton tone="danger" className={noAnswer ? 'is-armed' : 'is-idle'} onClick={() => act('CONTACT_115')}>
-          EMERGENCY SERVICE
-        </RetroButton>
-      }
-    >
-      <div className="col call">
-        <span className={`tile call-phone ${noAnswer ? 'is-dead' : ring ? 'is-ring' : ''}`}>
-          <SmartPhone />
-          {!noAnswer && (
-            <>
-              <i className="call-wave w1" />
-              <i className="call-wave w2" />
-            </>
-          )}
-          {noAnswer && <b className="call-x">✕</b>}
-        </span>
-        <p className="call-who">CALL BACK TO RIDER</p>
-        {noAnswer ? (
-          <p className="obox obox-red">NO ANSWER</p>
-        ) : (
-          <p className="call-status">
-            RINGING
-            {Array.from({ length: RINGS }, (_, i) => (
-              <i key={i} className={`call-dot ${i < ring ? 'on' : ''}`} />
-            ))}
-          </p>
-        )}
+    <RetroWindow className="no-foot" band={{ tone: 'red', text: failed ? 'CALL FAILED — NO ANSWER' : 'CALLING RIDER...' }}>
+      <div className="panel">
+        <div className="pbar-row">
+          <div className={`pbar ${failed ? 'pbar-fail' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={BLOCKS} aria-valuenow={step}>
+            {Array.from({ length: BLOCKS }, (_, i) => <i key={i} className={i < step ? 'on' : ''} />)}
+          </div>
+          <span className={`pbar-ico pbar-ico-lg call-ico ${failed ? 'is-dead' : 'is-ring'}`}>
+            <SmartPhone />
+            {failed && <b className="call-x">✕</b>}
+          </span>
+        </div>
       </div>
     </RetroWindow>
   );
