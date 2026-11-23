@@ -14,7 +14,7 @@ import { getBest, recordScore, pad5 } from '../lib/score.js';
  * Endless runner in the spirit of the Chrome Dino game, in 3 levels:
  *   LV 1 EASY       — slow, sparse single vehicles and obstacles
  *   LV 2 MEDIUM     — faster, denser, "walls" with one gap, a reckless rider
- *   LV 3 HARD       — very fast, dense, walls with one narrow gap — hard but always
+ *   LV 3 HARD       — fast, dense, walls with one narrow gap — hard but always
  *                     survivable: every wall has a way through, every rider can be dodged
  * The ride opens on a level select (◀ ▶ to choose, SPACE/ENTER to go). The
  * score counts up with distance; clearing LEVELS[i].len points moves up a level. Touching ANY vehicle or obstacle is GAME OVER → the crash scene.
@@ -33,7 +33,7 @@ const CRUISE_KMH = 30; // SCROLL is calibrated at this speed
 const ROWS = [56, 76, 104, 124];
 /**
  * The three levels — the player picks where to start; the ride then keeps
- * escalating (EASY → MEDIUM → HARD). len = points to clear the level; kmh = [start, end]
+ * escalating (EASY → MEDIUM → HARD); the FINISH line waits at the end of HARD. len = points to clear the level; kmh = [start, end]
  * speed across the level; spawn = seconds between spawns [min, max];
  * wall = chance a spawn is a wall across the road; gaps = free rows in a wall
  * (always ≥ 1 so there is a way through); rider = seconds until the reckless rider (null = none);
@@ -43,7 +43,7 @@ const ROWS = [56, 76, 104, 124];
 const LEVELS = [
   { name: 'EASY', tag: 'CHILL RIDE', len: 150, kmh: [35, 60], spawn: [1.3, 2.2], wall: 0, gaps: 2, rider: null, group: 2, weave: false },
   { name: 'MEDIUM', tag: 'RUSH HOUR', len: 230, kmh: [65, 100], spawn: [0.75, 1.25], wall: 0.25, gaps: 1, rider: 4, group: 3, weave: true },
-  { name: 'HARD', tag: 'NO MERCY', len: Infinity, kmh: [95, 130], spawn: [0.55, 0.9], wall: 0.4, gaps: 1, rider: 3, group: 3, weave: true },
+  { name: 'HARD', tag: 'NO MERCY', len: 250, kmh: [85, 115], spawn: [0.7, 1.05], wall: 0.3, gaps: 1, rider: 4, group: 3, weave: true },
 ];
 /** Points per day/night switch (the Dino game flips to night every 700 of its points). */
 const NIGHT_EVERY = 300;
@@ -186,6 +186,15 @@ function drawObstacle(g, o) {
     g.fillStyle = c;
     g.fillRect(x + dx * P, y + dy * P, w * P, h * P);
   };
+  if (o.type === 'finish') {
+    // checkered finish line across the whole road
+    for (let yy = ROAD_T; yy < ROAD_B; yy += 6)
+      for (let c = 0; c < 2; c++) {
+        g.fillStyle = ((yy - ROAD_T) / 6 + c) % 2 ? '#111' : '#f4f4f4';
+        g.fillRect(x + c * 6 - 6, yy, 6, 6);
+      }
+    return;
+  }
   if (o.type === 'cone') {
     R(-3, -2, 7, 5, 'rgba(0,0,0,.25)');
     R(-3, -3, 6, 6, '#111');
@@ -245,6 +254,9 @@ export default function Ride({ act }) {
     let blinkUntil = 0;
     let lastHud = 0;
     let night = 0;
+    let goal = 1; // points from the chosen level to the finish line
+    let finishLine = null;
+    let won = false;
     const traffic = [];
 
     const finish = () => {
@@ -274,6 +286,7 @@ export default function Ride({ act }) {
       chosenRef.current = n;
       keys.clear();
       kmh = LEVELS[n].kmh[0];
+      goal = LEVELS.slice(n).reduce((sum, L) => sum + L.len, 0);
       setSelect(null);
       startLevel(n);
     };
@@ -411,9 +424,16 @@ export default function Ride({ act }) {
         const L = LEVELS[lv];
         // ── level progress ──
         if (score - lvScore >= L.len && lv < LEVELS.length - 1) startLevel(lv + 1);
+        else if (score - lvScore >= L.len && !finishLine) {
+          // end of HARD: the finish line rolls in; no more traffic spawns
+          finishLine = { x: -20, y: MID, v: 0, type: 'finish', w: 0, h: 0, ob: true, finishLine: true };
+          traffic.push(finishLine);
+          riderAt = Infinity;
+          playCue('level');
+        }
 
         // ── speed: ramps across the level; throttle/brake on top ──
-        const span = Number.isFinite(L.len) ? L.len : 300;
+        const span = L.len;
         const p = Math.min(1, (score - lvScore) / span);
         const base = L.kmh[0] + (L.kmh[1] - L.kmh[0]) * p;
         const target = keys.has('l') ? base + 20 : keys.has('r') ? Math.max(20, base - 20) : base;
@@ -441,7 +461,7 @@ export default function Ride({ act }) {
 
         // ── spawning ──
         spawnIn -= dt;
-        if (spawnIn <= 0) {
+        if (spawnIn <= 0 && !finishLine) {
           const extra = spawn();
           spawnIn = L.spawn[0] + r() * (L.spawn[1] - L.spawn[0]) + extra;
         }
@@ -462,8 +482,8 @@ export default function Ride({ act }) {
           }
           o.x += (o.v + scroll * 0.55) * dt;
           const dx = player.x - o.x;
-          // homes in, but commits early (faster on HARD) — a quick swerve always dodges him
-          if (dx > (lv === 2 ? 85 : 60)) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), (lv === 2 ? 50 : 45) * dt);
+          // homes in, but commits early on HARD — a quick swerve always dodges him
+          if (dx > (lv === 2 ? 85 : 60)) o.y += Math.sign(player.y - o.y) * Math.min(Math.abs(player.y - o.y), (lv === 2 ? 40 : 45) * dt);
         }
         for (let i = traffic.length - 1; i >= 0; i--) {
           const o = traffic[i];
@@ -479,8 +499,21 @@ export default function Ride({ act }) {
           }
         }
 
+        // ── reached the finish line: YOU WIN ──
+        if (finishLine && finishLine.x >= player.x - 6) {
+          crashed = t; // freezes the ride exactly like GAME OVER
+          won = true;
+          playCue('confirm');
+          const final = Math.floor(score);
+          const isBest = recordScore(final);
+          setWarn(false);
+          setBanner(0);
+          setOver({ win: true, score: final, best: Math.max(final, best.current), isBest, lv, tries });
+        }
+
         // ── collisions: anything = GAME OVER ──
-        for (const o of traffic) {
+        for (const o of crashed ? [] : traffic) {
+          if (o.finishLine) continue;
           if (Math.abs(o.x - player.x) < (o.w + player.w) / 2 - 3 && Math.abs(o.y - player.y) < (o.h + player.h) / 2 - 2) {
             crashed = t;
             playCue('impact');
@@ -544,7 +577,7 @@ export default function Ride({ act }) {
         g.fillStyle = `rgba(227,38,42,${0.06 + 0.05 * Math.sin(t * 8)})`;
         g.fillRect(0, 0, VW, VH);
       }
-      if (crashed) {
+      if (crashed && !won) {
         const k = 1 - Math.min(1, (t - crashed) / 0.25);
         g.fillStyle = `rgba(255,255,255,${0.7 * k})`;
         g.fillRect(0, 0, VW, VH);
@@ -552,7 +585,7 @@ export default function Ride({ act }) {
 
       if (now - lastHud > 80 || crashed) {
         lastHud = now;
-        setHud({ speed: Math.round(kmh), score: Math.floor(score), blink: t < blinkUntil && Math.floor(t * 8) % 2 === 0, lv });
+        setHud({ speed: Math.round(kmh), score: Math.floor(score), blink: t < blinkUntil && Math.floor(t * 8) % 2 === 0, lv, goal: Math.min(1, score / goal) });
       }
       raf = requestAnimationFrame(frame);
     };
@@ -574,6 +607,15 @@ export default function Ride({ act }) {
         <div className="ride-hud ride-tl" style={select != null ? { visibility: 'hidden' } : undefined}>
           <span className={`ride-lv ride-lv-${hud.lv + 1}`}>LV {hud.lv + 1}</span> {hud.speed} KM/H
         </div>
+        {select == null && (
+          <div className="ride-goal" aria-label="Distance to the finish">
+            <span className="ride-goal-track">
+              <i style={{ width: `${Math.round((hud.goal || 0) * 100)}%` }} />
+              <b className="ride-goal-bike" style={{ left: `${Math.round((hud.goal || 0) * 100)}%` }} />
+            </span>
+            <span className="ride-goal-flag" />
+          </div>
+        )}
         <div className={`ride-hud ride-tr ride-score ${hud.blink ? 'is-blink' : ''}`}>
           <span className="k">HI {pad5(hi)}</span> {pad5(hud.score)}
         </div>
@@ -607,15 +649,16 @@ export default function Ride({ act }) {
         {warn === 'miss' && !banner && <div className="ride-warn ride-miss">DODGED! +50</div>}
         {over && (
           <div className="ride-over" role="status" key={`o${run}`}>
-            <p className="ride-over-t">GAME OVER</p>
+            <p className={`ride-over-t ${over.win ? 'is-win' : ''}`}>{over.win ? 'FINISH! YOU WIN' : 'GAME OVER'}</p>
             <p className="ride-over-s">
               LV {over.lv + 1} · SCORE {pad5(over.score)} <span className="k">HI {pad5(over.best)}</span>
             </p>
             {over.isBest && over.score > 0 && <p className="ride-over-new">NEW HIGH SCORE!</p>}
+            {over.win && <p className="ride-over-next">…BUT ON THE WAY HOME</p>}
             <p className="ride-over-try">TRY #{over.tries}</p>
             <div className="ride-over-btns">
               <button type="button" className="ride-over-b is-retry" onClick={() => retryRef.current?.()}>
-                ↻ TRY AGAIN <kbd className="wide">SPACE</kbd>
+                ↻ {over.win ? 'PLAY AGAIN' : 'TRY AGAIN'} <kbd className="wide">SPACE</kbd>
               </button>
               <button type="button" className="ride-over-b" onClick={() => retryRef.continue?.()}>
                 CONTINUE <kbd>ENTER</kbd>

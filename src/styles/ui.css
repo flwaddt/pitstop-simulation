@@ -2181,3 +2181,41 @@ body {
   animation: overBar linear both;
 }
 @keyframes overBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ── Ride: finish line progress + win ── */
+.ride-goal {
+  position: absolute;
+  top: 1.6%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.8cqw;
+  pointer-events: none;
+}
+.ride-goal-track {
+  position: relative;
+  width: 26cqw;
+  height: 1.3cqw;
+  background: rgb(10 14 12 / 0.75);
+  border: 0.25cqw solid var(--ink);
+  box-shadow: 0 0 0 0.2cqw #4a524d;
+}
+.ride-goal-track i { position: absolute; inset: 0 auto 0 0; background: var(--green-t); }
+.ride-goal-bike {
+  position: absolute;
+  top: 50%;
+  width: 1.4cqw;
+  height: 1.4cqw;
+  transform: translate(-50%, -50%);
+  background: var(--yellow);
+  border: 0.22cqw solid var(--ink);
+}
+.ride-goal-flag {
+  width: 2.4cqw;
+  height: 1.8cqw;
+  border: 0.22cqw solid var(--ink);
+  background: conic-gradient(#111 0 25%, #f4f4f4 0 50%, #111 0 75%, #f4f4f4 0) 0 0 / 1.2cqw 0.9cqw;
+}
+.ride-over-t.is-win { font-size: 3.2cqw; color: var(--green-t); animation: blink 0.5s steps(2) 4; }
+.ride-over-next { margin-top: 0.6cqw !important; font-family: var(--font-term); font-size: 2.1cqw; color: var(--yellow); letter-spacing: 0.1em; }
