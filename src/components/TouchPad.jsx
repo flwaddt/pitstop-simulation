@@ -3,6 +3,7 @@ import { sendKey } from '../lib/device.js';
 /**
  * On-screen controls for phones in the RIDE segment. Each button holds a
  * key down while pressed (◀ ▲ ▼ ▶ = A W S D), and NEXT sends SPACE.
+ * Layout: D-pad under the right thumb, NEXT under the left.
  */
 function HoldKey({ k, label, className = '' }) {
   const down = (e) => {

@@ -1698,6 +1698,7 @@ body {
   inset: auto 0 0 0;
   z-index: 5;
   display: flex;
+  flex-direction: row-reverse; /* D-pad on the right hand, NEXT/SKIP on the left */
   align-items: flex-end;
   justify-content: space-between;
   padding: 0 max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
